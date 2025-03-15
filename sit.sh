@@ -56,9 +56,9 @@ read -p "Are you running this script on the IRAN server or the FOREIGN server? (
 # Get primary IPv4 address
 primary_ipv4=$(get_primary_ipv4)
 echo -e "\033[1;37mDetected primary IPv4 address: $primary_ipv4\033[0m"
-use_primary_ipv4=$(ask_yes_no "Do you want to use this IPv4 address?")
+use_primary_ipv4=$(ask_yes_no "Is this the correct IPv4 address?")
 if [ "$use_primary_ipv4" == "no" ]; then
-    read -p "Please enter the IPv4 address: " primary_ipv4
+    read -p "Please enter the correct IPv4 address: " primary_ipv4
 fi
 
 # Define the IPv6 prefix
