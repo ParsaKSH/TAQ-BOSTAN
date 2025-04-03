@@ -69,7 +69,7 @@ if [ "$SERVER_TYPE" == "foreign" ]; then
   sudo apt install -y openssl
 
   colorEcho "Creating a self-signed certificate..." cyan
-  sudo openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
+  sudo openssl req -x509 -nodes -days 3650 -newkey ed25519 \
     -keyout /etc/hysteria/self.key \
     -out /etc/hysteria/self.crt \
     -subj "/CN=myserver"

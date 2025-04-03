@@ -62,15 +62,15 @@ execute_option() {
   case "$choice" in
     1)
       echo -e "${CYAN}Executing: Create best and safest tunnel...${RESET}"
-      bash <(curl -Ls https://raw.githubusercontent.com/ParsaKSH/TAQ-BOSTAN/main/hysteria.sh)
+      bash <(curl -Ls https://raw.githubusercontent.com/Shellgate/TAQ-BOSTAN/main/hysteria.sh)
       ;;
     2)
       echo -e "${CYAN}Executing: Create local IPv6 with Sit...${RESET}"
-      bash <(curl -Ls https://raw.githubusercontent.com/ParsaKSH/TAQ-BOSTAN/main/sit.sh)
+      bash <(curl -Ls https://raw.githubusercontent.com/Shellgate/TAQ-BOSTAN/main/sit.sh)
       ;;
     3)
       echo -e "${CYAN}Executing: Create local IPv6 with Wireguard...${RESET}"
-      bash <(curl -Ls https://raw.githubusercontent.com/ParsaKSH/TAQ-BOSTAN/main/wireguard.sh)
+      bash <(curl -Ls https://raw.githubusercontent.com/Shellgate/TAQ-BOSTAN/main/wireguard.sh)
       ;;
     4)
       echo -e "${CYAN}Deleting Hysteria tunnel...${RESET}"
