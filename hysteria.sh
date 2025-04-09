@@ -64,7 +64,7 @@ if [ "$SERVER_TYPE" == "foreign" ]; then
   sudo openssl req -x509 -nodes -days 3650 -newkey ed25519     -keyout /etc/hysteria/self.key     -out /etc/hysteria/self.crt     -subj "/CN=myserver"
 
   while true; do
-    read -p "Enter Hysteria port (1-65535): " H_PORT
+    read -p "Enter Hysteria port ex.(443) or (1-65535): " H_PORT
     if [[ "$H_PORT" =~ ^[0-9]+$ ]] && (( H_PORT > 0 && H_PORT < 65536 )); then
       break
     else
