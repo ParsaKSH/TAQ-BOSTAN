@@ -131,9 +131,9 @@ elif [ "$SERVER_TYPE" == "iran" ]; then
       fi
     done
 
-    read -p "Port: " Hysteria Port ex.(443)
+    read -p "Hysteria Port ex.(443): " PORT
     read -p "Password: " PASSWORD
-    read -p "SNI: " SNI ex.(google.com)
+    read -p "SNI ex.(google.com): " SNI
     read -p "Number of Forward ports ex.(2053): " PORT_COUNT
 
     TCP_FORWARD=""
