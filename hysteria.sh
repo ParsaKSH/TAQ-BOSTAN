@@ -131,10 +131,10 @@ elif [ "$SERVER_TYPE" == "iran" ]; then
       fi
     done
 
-    read -p "Port: " PORT
+    read -p "Port: " Hysteria Port ex.(443)
     read -p "Password: " PASSWORD
-    read -p "SNI: " SNI
-    read -p "Number of ports to tunnel: " PORT_COUNT
+    read -p "SNI: " SNI ex.(google.com)
+    read -p "Number of Forward ports ex.(2053): " PORT_COUNT
 
     TCP_FORWARD=""
     UDP_FORWARD=""
@@ -192,7 +192,7 @@ EOF
     sudo systemctl start hysteria${i}
   done
 
-  colorEcho "All tunnels for Iran server set up successfully." green
+  colorEcho "All tunnels set up successfully." green
 else
   colorEcho "Invalid server type. Please enter 'Iran' or 'Foreign'." red
   exit 1
