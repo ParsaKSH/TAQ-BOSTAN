@@ -140,7 +140,7 @@ elif [ "$SERVER_TYPE" == "iran" ]; then
     UDP_FORWARD=""
 
     for (( p=1; p<=PORT_COUNT; p++ )); do
-      read -p "Tunnel port #$p: " TUNNEL_PORT
+      read -p "Tunnel ports for Forward #$p: " TUNNEL_PORT
       TCP_FORWARD+="  - listen: 0.0.0.0:$TUNNEL_PORT
     remote: '$REMOTE_IP:$TUNNEL_PORT'
 "
