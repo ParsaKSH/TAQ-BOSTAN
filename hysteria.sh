@@ -123,11 +123,11 @@ elif [ "$SERVER_TYPE" == "iran" ]; then
   for (( i=1; i<=SERVER_COUNT; i++ )); do
     colorEcho "Foreign server #$i:" cyan
     while true; do
-      read -p "IP (v4 or v6) of server: " SERVER_ADDRESS
+      read -p "Enter IP Address for Foreign server: " SERVER_ADDRESS
       if [[ "$SERVER_ADDRESS" =~ ^[0-9a-fA-F:\.]+$ ]]; then
         break
       else
-        colorEcho "Invalid IP address." red
+        colorEcho "Invalid IP address " red
       fi
     done
 
