@@ -192,7 +192,7 @@ EOF
     sudo systemctl start hysteria${i}
   done
 
-  colorEcho "All tunnels set up successfully." green
+  colorEcho "Tunnels set up successfully." green
 else
   colorEcho "Invalid server type. Please enter 'Iran' or 'Foreign'." red
   exit 1
