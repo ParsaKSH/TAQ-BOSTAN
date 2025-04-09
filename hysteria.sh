@@ -44,7 +44,7 @@ sudo mkdir -p /etc/hysteria/
 
 # ------------------ Server Type Input ------------------
 while true; do
-  read -p "Are you installing on the Iranian server or the Foreign server? (Iran/Foreign): " SERVER_TYPE
+  read -p "installing Iranian server or Foreign server? (Iran/Foreign): " SERVER_TYPE
   SERVER_TYPE=$(echo "$SERVER_TYPE" | tr '[:upper:]' '[:lower:]')
   if [[ "$SERVER_TYPE" == "iran" || "$SERVER_TYPE" == "foreign" ]]; then
     break
