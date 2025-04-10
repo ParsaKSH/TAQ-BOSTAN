@@ -107,6 +107,8 @@ ExecStart=/usr/local/bin/hysteria server -c /etc/hysteria/server-config.yaml
 Restart=always
 RestartSec=5
 LimitNOFILE=1048576
+StandardOutput=append:/var/log/hysteria${i}.log
+StandardError=append:/var/log/hysteria${i}.err
 
 [Install]
 WantedBy=multi-user.target
@@ -188,6 +190,8 @@ ExecStart=/usr/local/bin/hysteria client -c $CONFIG_FILE
 Restart=always
 RestartSec=5
 LimitNOFILE=1048576
+StandardOutput=append:/var/log/hysteria${i}.log
+StandardError=append:/var/log/hysteria${i}.err
 
 [Install]
 WantedBy=multi-user.target
