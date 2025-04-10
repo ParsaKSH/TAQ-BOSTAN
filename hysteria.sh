@@ -61,7 +61,10 @@ if [ "$SERVER_TYPE" == "foreign" ]; then
   fi
 
   colorEcho "Generating self-signed certificate..." cyan
-  sudo openssl req -x509 -nodes -days 3650 -newkey ed25519     -keyout /etc/hysteria/self.key     -out /etc/hysteria/self.crt     -subj "/CN=myserver"
+  sudo openssl req -x509 -nodes -days 3650 -newkey ed25519 \
+    -keyout /etc/hysteria/self.key \
+    -out /etc/hysteria/self.crt \
+    -subj "/CN=myserver"
 
   while true; do
     read -p "Enter Hysteria port ex.(443) or (1-65535): " H_PORT
@@ -82,6 +85,14 @@ tls:
 auth:
   type: password
   password: "$H_PASSWORD"
+quic:
+  initStreamReceiveWindow: 67108864
+  maxStreamReceiveWindow: 67108864
+  initConnReceiveWindow: 134217728
+  maxConnReceiveWindow: 134217728
+  maxIdleTimeout: 3s
+  keepAliveInterval: 2s
+  disablePathMTUDiscovery: false
 speedTest: true
 EOF
 
@@ -96,8 +107,6 @@ ExecStart=/usr/local/bin/hysteria server -c /etc/hysteria/server-config.yaml
 Restart=always
 RestartSec=5
 LimitNOFILE=1048576
-StandardOutput=append:/var/log/hysteria.log
-StandardError=append:/var/log/hysteria.err
 
 [Install]
 WantedBy=multi-user.target
@@ -141,12 +150,8 @@ elif [ "$SERVER_TYPE" == "iran" ]; then
 
     for (( p=1; p<=PORT_COUNT; p++ )); do
       read -p "Tunnel ports for Forward ex.(2053) #$p: " TUNNEL_PORT
-      TCP_FORWARD+="  - listen: 0.0.0.0:$TUNNEL_PORT
-    remote: '$REMOTE_IP:$TUNNEL_PORT'
-"
-      UDP_FORWARD+="  - listen: 0.0.0.0:$TUNNEL_PORT
-    remote: '$REMOTE_IP:$TUNNEL_PORT'
-"
+      TCP_FORWARD+="  - listen: 0.0.0.0:$TUNNEL_PORT\n    remote: '$REMOTE_IP:$TUNNEL_PORT'\n"
+      UDP_FORWARD+="  - listen: 0.0.0.0:$TUNNEL_PORT\n    remote: '$REMOTE_IP:$TUNNEL_PORT'\n"
     done
 
     CONFIG_FILE="/etc/hysteria/iran-config${i}.yaml"
@@ -159,9 +164,13 @@ tls:
   sni: "$SNI"
   insecure: true
 quic:
-  initStreamReceiveWindow: 8388608
-  maxIdleTimeout: 10s
-  keepAliveInterval: 10s
+  initStreamReceiveWindow: 67108864
+  maxStreamReceiveWindow: 67108864
+  initConnReceiveWindow: 134217728
+  maxConnReceiveWindow: 134217728
+  maxIdleTimeout: 3s
+  keepAliveInterval: 2s
+  disablePathMTUDiscovery: false
 tcpForwarding:
 $TCP_FORWARD
 udpForwarding:
@@ -179,8 +188,6 @@ ExecStart=/usr/local/bin/hysteria client -c $CONFIG_FILE
 Restart=always
 RestartSec=5
 LimitNOFILE=1048576
-StandardOutput=append:/var/log/hysteria${i}.log
-StandardError=append:/var/log/hysteria${i}.err
 
 [Install]
 WantedBy=multi-user.target
