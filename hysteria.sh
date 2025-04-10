@@ -90,8 +90,8 @@ quic:
   maxStreamReceiveWindow: 67108864
   initConnReceiveWindow: 134217728
   maxConnReceiveWindow: 134217728
-  maxIdleTimeout: 3s
-  keepAliveInterval: 2s
+  maxIdleTimeout: 5s
+  keepAliveInterval: 3s
   disablePathMTUDiscovery: false
 speedTest: true
 EOF
@@ -174,8 +174,8 @@ quic:
   maxStreamReceiveWindow: 67108864
   initConnReceiveWindow: 134217728
   maxConnReceiveWindow: 134217728
-  maxIdleTimeout: 3s
-  keepAliveInterval: 2s
+  maxIdleTimeout: 5s
+  keepAliveInterval: 3s
   disablePathMTUDiscovery: false
 speedTest: true
 tcpForwarding:
