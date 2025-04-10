@@ -118,7 +118,7 @@ EOF
   sudo systemctl enable hysteria
   sudo systemctl start hysteria
 
-  (crontab -l 2>/dev/null | grep -v 'restart hysteria'; echo "0 */3 * * * /usr/bin/systemctl restart hysteria") | crontab -
+  (crontab -l 2>/dev/null | grep -v 'restart hysteria'; echo "0 */12 * * * /usr/bin/systemctl restart hysteria") | crontab -
   colorEcho "Foreign server setup completed." green
 
 elif [ "$SERVER_TYPE" == "iran" ]; then
@@ -202,7 +202,7 @@ StandardError=append:/var/log/hysteria${i}.err
 WantedBy=multi-user.target
 EOF
 
-    (crontab -l 2>/dev/null | grep -v "restart hysteria${i}"; echo "0 4 * * * /usr/bin/systemctl restart hysteria${i}") | crontab -
+    (crontab -l 2>/dev/null | grep -v "restart hysteria${i}"; echo "0 6 * * * /usr/bin/systemctl restart hysteria${i}") | crontab -
     sudo systemctl daemon-reload
     sudo systemctl enable hysteria${i}
     sudo systemctl start hysteria${i}
