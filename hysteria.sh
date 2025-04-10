@@ -152,8 +152,12 @@ elif [ "$SERVER_TYPE" == "iran" ]; then
 
     for (( p=1; p<=PORT_COUNT; p++ )); do
       read -p "Tunnel ports for Forward ex.(2053) #$p: " TUNNEL_PORT
-      TCP_FORWARD+="  - listen: 0.0.0.0:$TUNNEL_PORT\n    remote: '$REMOTE_IP:$TUNNEL_PORT'\n"
-      UDP_FORWARD+="  - listen: 0.0.0.0:$TUNNEL_PORT\n    remote: '$REMOTE_IP:$TUNNEL_PORT'\n"
+      TCP_FORWARD+="  - listen: 0.0.0.0:$TUNNEL_PORT
+    remote: '$REMOTE_IP:$TUNNEL_PORT'
+"
+      UDP_FORWARD+="  - listen: 0.0.0.0:$TUNNEL_PORT
+    remote: '$REMOTE_IP:$TUNNEL_PORT'
+"
     done
 
     CONFIG_FILE="/etc/hysteria/iran-config${i}.yaml"
@@ -173,6 +177,7 @@ quic:
   maxIdleTimeout: 3s
   keepAliveInterval: 2s
   disablePathMTUDiscovery: false
+speedTest: true
 tcpForwarding:
 $TCP_FORWARD
 udpForwarding:
