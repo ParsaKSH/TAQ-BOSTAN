@@ -200,14 +200,13 @@ OP-Iran Group:
 ---
 
 <img src="https://client.digitalvps.ir/templates/lagom2/assets/img/logo/logo_big.1066038415.png" width="34" /> Buy high-quality Iran & international servers with 10Gb/s port
+-
 
 If you need a powerful, stable, and affordable server for tunneling or internet infrastructure, DigitalVPS is the perfect choice.
 
 🔹 VPS in Iran from trusted providers (exclusive, high-quality links):
 
-Afranet <img src="https://client.digitalvps.ir/Logo/afranettttt.png" width="74" /> (Recommended by the developer)
-
-Respina <img src="https://client.digitalvps.ir/templates/lagom2/assets/img/page-manager/Respina-Logo.png" width="34" />
+**Respina** <img src="https://client.digitalvps.ir/templates/lagom2/assets/img/page-manager/Respina-Logo.png" width="34" /> (Recommended by the developer)
 
 Shatel <img src="https://client.digitalvps.ir/templates/lagom2/assets/img/page-manager/shatel1.png" width="24" />
 

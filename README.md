@@ -177,8 +177,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/Shellgate/TAQ-BOSTAN/main/scri
 اگر برای راه‌اندازی تونل‌ها و زیرساخت‌های اینترنتی به یک سرور قدرتمند، پایدار و به‌صرفه نیاز دارید، **DigitalVPS** انتخابی شایسته است.
 
 🔹 ارائه سرورهای مجازی ایران از شرکت‌های معتبر(لینک اختصاصی و با کیفیت):
-- **افرانت**<img src="https://client.digitalvps.ir/Logo/afranettttt.png" width="74" /> (پیشنهاد توسعه‌دهنده)
-- رسپینا <img src="https://client.digitalvps.ir/templates/lagom2/assets/img/page-manager/Respina-Logo.png" width="34" />
+- **رسپینا** <img src="https://client.digitalvps.ir/templates/lagom2/assets/img/page-manager/Respina-Logo.png" width="34" /> (پیشنهاد توسعه‌دهنده)
 -  شاتل <img src="https://client.digitalvps.ir/templates/lagom2/assets/img/page-manager/shatel1.png" width="24" />
 -  مبین‌نت <img src="https://client.digitalvps.ir/Logo/MobinNetLog.png" width="24" />
 
