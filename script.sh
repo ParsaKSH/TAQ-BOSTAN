@@ -88,7 +88,8 @@ execute_option() {
         echo -e "\033[1;33mRebooting the system...\033[0m"
         sudo reboot
       else 
-        exit 1
+        echo -e
+      fi
       ;;
     5)
       echo -e "${CYAN}Deleting local IPv6 with Sit...${RESET}"
@@ -105,7 +106,8 @@ execute_option() {
         echo -e "\033[1;33mRebooting the system...\033[0m"
         sudo reboot
       else 
-        exit 1
+        echo -e ""
+      fi
       ;;
     6)
       echo -e "${CYAN}Deleting local IPv6 with Wireguard...${RESET}"
@@ -117,7 +119,8 @@ execute_option() {
         echo -e "\033[1;33mRebooting the system...\033[0m"
         sudo reboot
       else 
-        exit 1
+        echo -e ""
+      fi
       ;;
     7)
       read -p "For which foreign server number do you want to run the speedtest? " server_number
