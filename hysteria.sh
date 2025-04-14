@@ -37,6 +37,12 @@ if ! curl -fsSL "$DOWNLOAD_URL" -o hysteria; then
   colorEcho "Failed to download hysteria binary." red
   exit 1
 fi
+
+if ! file hysteria | grep -q "executable"; then
+  colorEcho "Downloaded file is not an executable." red
+  exit 1
+fi
+
 chmod +x hysteria
 sudo mv hysteria /usr/local/bin/
 
@@ -107,8 +113,8 @@ ExecStart=/usr/local/bin/hysteria server -c /etc/hysteria/server-config.yaml
 Restart=always
 RestartSec=5
 LimitNOFILE=1048576
-StandardOutput=append:/var/log/hysteria${i}.log
-StandardError=append:/var/log/hysteria${i}.err
+StandardOutput=append:/var/log/hysteria.log
+StandardError=append:/var/log/hysteria.err
 
 [Install]
 WantedBy=multi-user.target
@@ -118,7 +124,6 @@ EOF
   sudo systemctl enable hysteria
   sudo systemctl start hysteria
 
-  (crontab -l 2>/dev/null | grep -v 'restart hysteria'; echo "0 */12 * * * /usr/bin/systemctl restart hysteria") | crontab -
   colorEcho "Foreign server setup completed." green
 
 elif [ "$SERVER_TYPE" == "iran" ]; then
@@ -152,12 +157,8 @@ elif [ "$SERVER_TYPE" == "iran" ]; then
 
     for (( p=1; p<=PORT_COUNT; p++ )); do
       read -p "Tunnel ports for Forward ex.(2053) #$p: " TUNNEL_PORT
-      TCP_FORWARD+="  - listen: 0.0.0.0:$TUNNEL_PORT
-    remote: '$REMOTE_IP:$TUNNEL_PORT'
-"
-      UDP_FORWARD+="  - listen: 0.0.0.0:$TUNNEL_PORT
-    remote: '$REMOTE_IP:$TUNNEL_PORT'
-"
+      TCP_FORWARD+="  - listen: 0.0.0.0:$TUNNEL_PORT\n    remote: '$REMOTE_IP:$TUNNEL_PORT'\n"
+      UDP_FORWARD+="  - listen: 0.0.0.0:$TUNNEL_PORT\n    remote: '$REMOTE_IP:$TUNNEL_PORT'\n"
     done
 
     CONFIG_FILE="/etc/hysteria/iran-config${i}.yaml"
@@ -202,7 +203,6 @@ StandardError=append:/var/log/hysteria${i}.err
 WantedBy=multi-user.target
 EOF
 
-    (crontab -l 2>/dev/null | grep -v "restart hysteria${i}"; echo "0 6 * * * /usr/bin/systemctl restart hysteria${i}") | crontab -
     sudo systemctl daemon-reload
     sudo systemctl enable hysteria${i}
     sudo systemctl start hysteria${i}
