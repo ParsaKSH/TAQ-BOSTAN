@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+trap 'colorEcho "Script terminated prematurely." red' ERR
 
 # ------------------ Color Output Function ------------------
 colorEcho() {
@@ -171,10 +172,10 @@ elif [ "$SERVER_TYPE" == "iran" ]; then
     colorEcho "Foreign server #$i:" cyan
     while true; do
       read -p "Enter IP Address for Foreign server: " SERVER_ADDRESS
-      if [[ "$SERVER_ADDRESS" =~ ^[0-9a-fA-F:\.]+$ ]]; then
+      if [[ "$SERVER_ADDRESS" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ || "$SERVER_ADDRESS" =~ ^[0-9a-fA-F:]+$ ]]; then
         break
       else
-        colorEcho "Invalid IP address " red
+        colorEcho "Invalid IP address" red
       fi
     done
 
@@ -187,7 +188,15 @@ elif [ "$SERVER_TYPE" == "iran" ]; then
     UDP_FORWARD=""
 
     for (( p=1; p<=PORT_COUNT; p++ )); do
-      read -p "Tunnel ports for Forward ex.(2053) #$p: " TUNNEL_PORT
+      while true; do
+        read -p "Tunnel ports for Forward ex.(2053) #$p: " TUNNEL_PORT
+        if ss -tuln | grep -q ":$TUNNEL_PORT"; then
+          colorEcho "Port $TUNNEL_PORT is already in use. Choose another one." red
+        else
+          break
+        fi
+      done
+
       TCP_FORWARD+="  - listen: 0.0.0.0:$TUNNEL_PORT"$'\n'
       TCP_FORWARD+="    remote: '$REMOTE_IP:$TUNNEL_PORT'"$'\n'
       UDP_FORWARD+="  - listen: 0.0.0.0:$TUNNEL_PORT"$'\n'
