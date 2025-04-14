@@ -81,7 +81,7 @@ if [ "$SERVER_TYPE" == "iran" ]; then
 
     case "$IP_VERSION_CHOICE" in
       1)
-        REMOTE_IP="localhost"
+        REMOTE_IP="0.0.0.0"
         break
         ;;
       2)
