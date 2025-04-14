@@ -42,16 +42,58 @@ sudo mv hysteria /usr/local/bin/
 
 sudo mkdir -p /etc/hysteria/
 
-# ------------------ Server Type Input ------------------
+# ------------------ Server Type Menu ------------------
 while true; do
-  read -p "installing Iranian server or Foreign server? (Iran/Foreign): " SERVER_TYPE
-  SERVER_TYPE=$(echo "$SERVER_TYPE" | tr '[:upper:]' '[:lower:]')
-  if [[ "$SERVER_TYPE" == "iran" || "$SERVER_TYPE" == "foreign" ]]; then
-    break
-  else
-    colorEcho "Invalid input. Please enter 'Iran' or 'Foreign'." red
-  fi
+  echo ""
+  echo "Select server type:"
+  echo "  [1] Iran"
+  echo "  [2] Foreign"
+  echo "  [3] Exit"
+  read -rp "Enter your choice [1-3]: " SERVER_CHOICE
+
+  case "$SERVER_CHOICE" in
+    1)
+      SERVER_TYPE="iran"
+      break
+      ;;
+    2)
+      SERVER_TYPE="foreign"
+      break
+      ;;
+    3)
+      colorEcho "Exiting..." yellow
+      exit 0
+      ;;
+    *)
+      colorEcho "Invalid selection. Please enter 1, 2, or 3." red
+      ;;
+  esac
 done
+
+# ------------------ IP Version Menu (Only for Iran) ------------------
+if [ "$SERVER_TYPE" == "iran" ]; then
+  while true; do
+    echo ""
+    echo "Select IP version for remote connection:"
+    echo "  [1] IPv4"
+    echo "  [2] IPv6"
+    read -rp "Enter your choice [1-2]: " IP_VERSION_CHOICE
+
+    case "$IP_VERSION_CHOICE" in
+      1)
+        REMOTE_IP="localhost"
+        break
+        ;;
+      2)
+        REMOTE_IP="[::]"
+        break
+        ;;
+      *)
+        colorEcho "Invalid selection. Please enter 1 or 2." red
+        ;;
+    esac
+  done
+fi
 
 if [ "$SERVER_TYPE" == "foreign" ]; then
   colorEcho "Setting up foreign server..." green
@@ -107,8 +149,8 @@ ExecStart=/usr/local/bin/hysteria server -c /etc/hysteria/server-config.yaml
 Restart=always
 RestartSec=5
 LimitNOFILE=1048576
-StandardOutput=append:/var/log/hysteria${i}.log
-StandardError=append:/var/log/hysteria${i}.err
+StandardOutput=file:/var/log/hysteria.log
+StandardError=file:/var/log/hysteria.err
 
 [Install]
 WantedBy=multi-user.target
@@ -122,11 +164,6 @@ EOF
 
 elif [ "$SERVER_TYPE" == "iran" ]; then
   colorEcho "Setting up Iranian server..." green
-
-  read -p "Use IPv4 or IPv6 for remote? (IPv4/IPv6): " IP_VERSION
-  IP_VERSION=$(echo "$IP_VERSION" | tr '[:upper:]' '[:lower:]')
-  REMOTE_IP="localhost"
-  [[ "$IP_VERSION" == "ipv6" ]] && REMOTE_IP="[::]"
 
   read -p "How many foreign servers do you have? " SERVER_COUNT
 
@@ -192,8 +229,8 @@ ExecStart=/usr/local/bin/hysteria client -c $CONFIG_FILE
 Restart=always
 RestartSec=5
 LimitNOFILE=1048576
-StandardOutput=append:/var/log/hysteria${i}.log
-StandardError=append:/var/log/hysteria${i}.err
+StandardOutput=file:/var/log/hysteria${i}.log
+StandardError=file:/var/log/hysteria${i}.err
 
 [Install]
 WantedBy=multi-user.target
