@@ -80,16 +80,15 @@ execute_option() {
         sudo systemctl disable hysteria 2>/dev/null
       done
       sudo rm /etc/hysteria/server-config.yaml 2>/dev/null
-      sudo rm /etc/hysteria/iran-config1.yaml 2>/dev/null
-      sudo rm /etc/hysteria/iran-config2.yaml 2>/dev/null
-      sudo rm /etc/hysteria/iran-config3.yaml 2>/dev/null
-      sudo rm /etc/hysteria/iran-config4.yaml 2>/dev/null
-      sudo rm /etc/hysteria/iran-config5.yaml 2>/dev/null
-      sudo rm /etc/hysteria/iran-config6.yaml 2>/dev/null
-      sudo rm /etc/hysteria/iran-config7.yaml 2>/dev/null
-      sudo rm /etc/hysteria/iran-config8.yaml 2>/dev/null
+      for i in {1..8}; do
+      sudo rm /etc/hysteria/iran-config$i.yaml 2>/dev/null
       echo -e "${GREEN}Hysteria tunnel successfully deleted.${RESET}"
-      sudo reboot
+      reboot_choice=$(ask_yes_no "Operation completed successfully. Please reboot the system")
+      if [ "$reboot_choice" == "yes" ]; then
+        echo -e "\033[1;33mRebooting the system...\033[0m"
+        sudo reboot
+      else 
+        exit 1
       ;;
     5)
       echo -e "${CYAN}Deleting local IPv6 with Sit...${RESET}"
@@ -102,7 +101,11 @@ execute_option() {
       sudo netplan apply 
       sudo systemctl restart systemd-networkd
       echo -e "${GREEN}Local IPv6 with Sit successfully deleted.${RESET}"
-      sudo shutdown -r now
+      if [ "$reboot_choice" == "yes" ]; then
+        echo -e "\033[1;33mRebooting the system...\033[0m"
+        sudo reboot
+      else 
+        exit 1
       ;;
     6)
       echo -e "${CYAN}Deleting local IPv6 with Wireguard...${RESET}"
@@ -110,7 +113,11 @@ execute_option() {
       sudo systemctl disable wg-quick@TAQBOSTANwg 2>/dev/null
       sudo rm /etc/wireguard/TAQBOSTANwg.conf 2>/dev/null
       echo -e "${GREEN}Local IPv6 with Wireguard successfully deleted.${RESET}"
-      sudo shutdown -r now
+      if [ "$reboot_choice" == "yes" ]; then
+        echo -e "\033[1;33mRebooting the system...\033[0m"
+        sudo reboot
+      else 
+        exit 1
       ;;
     7)
       read -p "For which foreign server number do you want to run the speedtest? " server_number
