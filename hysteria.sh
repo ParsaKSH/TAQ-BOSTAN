@@ -192,14 +192,26 @@ elif [ "$SERVER_TYPE" == "iran" ]; then
 
     TCP_FORWARD=""
     UDP_FORWARD=""
+    FORWARDED_PORTS=""
 
-    for (( p=1; p<=PORT_FORWARD_COUNT; p++ )); do
+    for (( p=1; p<=$PORT_FORWARD_COUNT; p++ ))
+    do
       read -p "Enter port number #$p you want to tunnel: " TUNNEL_PORT
+      
+      TCP_FORWARD+="  - listen: 0.0.0.0:$TUNNEL_PORT
+    remote: '$REMOTE_IP:$TUNNEL_PORT'
+"
+      UDP_FORWARD+="  - listen: 0.0.0.0:$TUNNEL_PORT
+    remote: '$REMOTE_IP:$TUNNEL_PORT'
+"
 
-      TCP_FORWARD+="  - listen: 0.0.0.0:$TUNNEL_PORT\n    remote: $REMOTE_IP:$TUNNEL_PORT\n"
-      UDP_FORWARD+="  - listen: 0.0.0.0:$TUNNEL_PORT\n    remote: $REMOTE_IP:$TUNNEL_PORT\n"
+      if [ -z "$FORWARDED_PORTS" ]; then
+        FORWARDED_PORTS="$TUNNEL_PORT"
+      else
+        FORWARDED_PORTS="$FORWARDED_PORTS, $TUNNEL_PORT"
+      fi
     done
-
+    
     CONFIG_FILE="/etc/hysteria/iran-config${i}.yaml"
     SERVICE_FILE="/etc/systemd/system/hysteria${i}.service"
 
