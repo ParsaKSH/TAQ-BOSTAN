@@ -42,7 +42,6 @@ chmod +x hysteria
 sudo mv hysteria /usr/local/bin/
 
 sudo mkdir -p /etc/hysteria/
-sudo mkdir -p /var/log/
 sudo mkdir -p /var/log/hysteria/
 
 # ------------------ Server Type Menu ------------------
@@ -123,7 +122,14 @@ if [ "$SERVER_TYPE" == "foreign" ]; then
     fi
   done
 
-  read -p "Enter password: " H_PASSWORD
+  while true; do
+    read -p "Enter password: " H_PASSWORD
+    if [[ -z "$H_PASSWORD" ]]; then
+      colorEcho "Password cannot be empty. Please enter a valid password." red
+    else
+      break
+    fi
+  done
 
   cat << EOF | sudo tee /etc/hysteria/server-config.yaml > /dev/null
 listen: ":$H_PORT"
@@ -164,8 +170,11 @@ EOF
 
   sudo systemctl daemon-reload
   sudo systemctl enable hysteria
-  sudo systemctl start hysteria
-  sudo systemctl reload-or-restart hysteria
+  if systemctl is-active --quiet hysteria; then
+    sudo systemctl restart hysteria
+  else
+    sudo systemctl start hysteria
+  fi
 
   colorEcho "Foreign server setup completed." green
 
@@ -178,16 +187,25 @@ elif [ "$SERVER_TYPE" == "iran" ]; then
   for (( i=1; i<=SERVER_COUNT; i++ )); do
     colorEcho "Foreign server #$i:" cyan
     while true; do
-      read -p "Enter IP Address for Foreign server: " SERVER_ADDRESS
-      if [[ "$SERVER_ADDRESS" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ || "$SERVER_ADDRESS" =~ ^[0-9a-fA-F:]+$ ]]; then
+      read -p "Enter IP Address or Domain for Foreign server: " SERVER_ADDRESS
+      if [[ "$SERVER_ADDRESS" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ || "$SERVER_ADDRESS" =~ ^[0-9a-fA-F:]+$ || "$SERVER_ADDRESS" =~ ^[a-zA-Z0-9.-]+$ ]]; then
         break
       else
-        colorEcho "Invalid IP address" red
+        colorEcho "Invalid input. Please enter a valid IP or domain." red
       fi
     done
 
     read -p "Hysteria Port ex.(443): " PORT
-    read -p "Password: " PASSWORD
+
+    while true; do
+      read -p "Password: " PASSWORD
+      if [[ -z "$PASSWORD" ]]; then
+        colorEcho "Password cannot be empty. Please enter a valid password." red
+      else
+        break
+      fi
+    done
+
     read -p "SNI ex.(google.com): " SNI
     read -p "Total request forwarding ports ex.(1) " PORT_FORWARD_COUNT
 
@@ -198,13 +216,9 @@ elif [ "$SERVER_TYPE" == "iran" ]; then
     for (( p=1; p<=$PORT_FORWARD_COUNT; p++ ))
     do
       read -p "Enter port number #$p you want to tunnel: " TUNNEL_PORT
-      
-      TCP_FORWARD+="  - listen: 0.0.0.0:$TUNNEL_PORT
-    remote: '$REMOTE_IP:$TUNNEL_PORT'
-"
-      UDP_FORWARD+="  - listen: 0.0.0.0:$TUNNEL_PORT
-    remote: '$REMOTE_IP:$TUNNEL_PORT'
-"
+
+      TCP_FORWARD+="  - listen: 0.0.0.0:$TUNNEL_PORT\n    remote: '$REMOTE_IP:$TUNNEL_PORT'\n"
+      UDP_FORWARD+="  - listen: 0.0.0.0:$TUNNEL_PORT\n    remote: '$REMOTE_IP:$TUNNEL_PORT'\n"
 
       if [ -z "$FORWARDED_PORTS" ]; then
         FORWARDED_PORTS="$TUNNEL_PORT"
@@ -212,7 +226,7 @@ elif [ "$SERVER_TYPE" == "iran" ]; then
         FORWARDED_PORTS="$FORWARDED_PORTS, $TUNNEL_PORT"
       fi
     done
-    
+
     CONFIG_FILE="/etc/hysteria/iran-config${i}.yaml"
     SERVICE_FILE="/etc/systemd/system/hysteria${i}.service"
 
@@ -230,7 +244,7 @@ quic:
   maxIdleTimeout: 11s
   keepAliveInterval: 10s
   disablePathMTUDiscovery: false
-  
+
 tcpForwarding:
 $TCP_FORWARD
 udpForwarding:
@@ -257,8 +271,11 @@ EOF
 
     sudo systemctl daemon-reload
     sudo systemctl enable hysteria${i}
-    sudo systemctl start hysteria${i}
-    sudo systemctl reload-or-restart hysteria${i}
+    if systemctl is-active --quiet hysteria${i}; then
+      sudo systemctl restart hysteria${i}
+    else
+      sudo systemctl start hysteria${i}
+    fi
   done
 
   colorEcho "Tunnels set up successfully." green
