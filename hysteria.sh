@@ -1,5 +1,5 @@
 #!/bin/bash
-set -Eeuo pipefail
+set -e
 trap 'colorEcho "Script terminated prematurely." red' ERR
 
 # ------------------ Color Output Function ------------------
@@ -42,7 +42,6 @@ chmod +x hysteria
 sudo mv hysteria /usr/local/bin/
 
 sudo mkdir -p /etc/hysteria/
-sudo mkdir -p /var/log
 
 # ------------------ Server Type Menu ------------------
 while true; do
@@ -87,7 +86,7 @@ if [ "$SERVER_TYPE" == "iran" ]; then
         break
         ;;
       2)
-        REMOTE_IP="::"
+        REMOTE_IP="[::]"
         break
         ;;
       *)
@@ -110,7 +109,6 @@ if [ "$SERVER_TYPE" == "foreign" ]; then
     -keyout /etc/hysteria/self.key \
     -out /etc/hysteria/self.crt \
     -subj "/CN=myserver"
-  sudo chmod 600 /etc/hysteria/self.key
 
   while true; do
     read -p "Enter Hysteria port ex.(443) or (1-65535): " H_PORT
@@ -186,21 +184,16 @@ elif [ "$SERVER_TYPE" == "iran" ]; then
     read -p "Hysteria Port ex.(443): " PORT
     read -p "Password: " PASSWORD
     read -p "SNI ex.(google.com): " SNI
-    read -p "Total request forwarding ports ex.(1) ? " PORT_FORWARD_COUNT
+    read -p "Total request forwarding ports ex.(1) " PORT_FORWARD_COUNT
 
     TCP_FORWARD=""
     UDP_FORWARD=""
 
-    for (( p=1; p<=$PORT_FORWARD_COUNT; p++ ))
-    do
+    for (( p=1; p<=PORT_FORWARD_COUNT; p++ )); do
       read -p "Enter port number #$p you want to tunnel: " TUNNEL_PORT
 
-      TCP_FORWARD+="  - listen: 0.0.0.0:$TUNNEL_PORT
-    remote: \"[$REMOTE_IP]:$TUNNEL_PORT\"
-"
-      UDP_FORWARD+="  - listen: 0.0.0.0:$TUNNEL_PORT
-    remote: \"[$REMOTE_IP]:$TUNNEL_PORT\"
-"
+      TCP_FORWARD+="  - listen: 0.0.0.0:$TUNNEL_PORT\n    remote: $REMOTE_IP:$TUNNEL_PORT\n"
+      UDP_FORWARD+="  - listen: 0.0.0.0:$TUNNEL_PORT\n    remote: $REMOTE_IP:$TUNNEL_PORT\n"
     done
 
     CONFIG_FILE="/etc/hysteria/iran-config${i}.yaml"
