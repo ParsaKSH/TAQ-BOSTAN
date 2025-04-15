@@ -227,10 +227,10 @@ quic:
   maxStreamReceiveWindow: 67108864
   initConnReceiveWindow: 134217728
   maxConnReceiveWindow: 134217728
-  maxIdleTimeout: 20s
-  keepAliveInterval: 15s
+  maxIdleTimeout: 11s
+  keepAliveInterval: 10s
   disablePathMTUDiscovery: false
-speedTest: true
+  
 tcpForwarding:
 $TCP_FORWARD
 udpForwarding:
