@@ -163,9 +163,9 @@ WantedBy=multi-user.target
 EOF
 
   sudo systemctl daemon-reload
-  sudo systemctl enable hysteria${i}
-  sudo systemctl start hysteria${i}
-  sudo systemctl reload-or-restart hysteria${i}
+  sudo systemctl enable hysteria
+  sudo systemctl start hysteria
+  sudo systemctl reload-or-restart hysteria
 
   colorEcho "Foreign server setup completed." green
 
