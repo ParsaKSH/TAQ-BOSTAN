@@ -43,6 +43,7 @@ sudo mv hysteria /usr/local/bin/
 
 sudo mkdir -p /etc/hysteria/
 sudo mkdir -p /var/log/hysteria/
+sudo mkdir -p /var/log/
 
 # ------------------ Server Type Menu ------------------
 while true; do
