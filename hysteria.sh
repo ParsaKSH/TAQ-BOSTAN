@@ -140,10 +140,10 @@ auth:
   type: password
   password: "$H_PASSWORD"
 quic:
-  initStreamReceiveWindow: 33554432
-  maxStreamReceiveWindow: 67108864
-  initConnReceiveWindow: 67108864
-  maxConnReceiveWindow: 134217728
+  initStreamReceiveWindow: 6291456
+  maxStreamReceiveWindow: 25165824
+  initConnReceiveWindow: 8388608
+  maxConnReceiveWindow: 33554432
   maxIdleTimeout: 15s
   keepAliveInterval: 8s
   disablePathMTUDiscovery: true
@@ -242,10 +242,10 @@ tls:
   sni: "$SNI"
   insecure: true
 quic:
-  initStreamReceiveWindow: 33554432
-  maxStreamReceiveWindow: 67108864
-  initConnReceiveWindow: 67108864
-  maxConnReceiveWindow: 134217728
+  initStreamReceiveWindow: 6291456
+  maxStreamReceiveWindow: 25165824
+  initConnReceiveWindow: 8388608
+  maxConnReceiveWindow: 33554432
   maxIdleTimeout: 15s
   keepAliveInterval: 8s
   disablePathMTUDiscovery: true
