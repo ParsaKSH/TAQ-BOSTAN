@@ -165,6 +165,7 @@ EOF
   sudo systemctl daemon-reload
   sudo systemctl enable hysteria
   sudo systemctl start hysteria
+  sudo systemctl reload-or-restart hysteria
 
   colorEcho "Foreign server setup completed." green
 
@@ -257,6 +258,7 @@ EOF
     sudo systemctl daemon-reload
     sudo systemctl enable hysteria
     sudo systemctl start hysteria
+    sudo systemctl reload-or-restart hysteria
   done
 
   colorEcho "Tunnels set up successfully." green
