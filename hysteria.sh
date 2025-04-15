@@ -146,7 +146,7 @@ quic:
   maxConnReceiveWindow: 268435456
   maxIdleTimeout: 15s
   keepAliveInterval: 8s
-  disablePathMTUDiscovery: false
+  disablePathMTUDiscovery: true
   congestionControl: bbr
   maxIncomingStreams: 2048
   maxIncomingUniStreams: 1024
@@ -248,7 +248,7 @@ quic:
   maxConnReceiveWindow: 268435456
   maxIdleTimeout: 15s
   keepAliveInterval: 8s
-  disablePathMTUDiscovery: false
+  disablePathMTUDiscovery: true
   congestionControl: bbr
   maxIncomingStreams: 2048
   maxIncomingUniStreams: 1024
