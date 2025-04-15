@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+trap 'colorEcho "Script terminated prematurely." red' ERR
 
 # ------------------ Color Output Function ------------------
 colorEcho() {
@@ -171,10 +172,10 @@ elif [ "$SERVER_TYPE" == "iran" ]; then
     colorEcho "Foreign server #$i:" cyan
     while true; do
       read -p "Enter IP Address for Foreign server: " SERVER_ADDRESS
-      if [[ "$SERVER_ADDRESS" =~ ^[0-9a-fA-F:\.]+$ ]]; then
+      if [[ "$SERVER_ADDRESS" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ || "$SERVER_ADDRESS" =~ ^[0-9a-fA-F:]+$ ]]; then
         break
       else
-        colorEcho "Invalid IP address " red
+        colorEcho "Invalid IP address" red
       fi
     done
 
@@ -245,5 +246,8 @@ EOF
     sudo systemctl start hysteria${i}
   done
 
-  colorEcho "Iranian server setup completed." green
+  colorEcho "Tunnels set up successfully." green
+else
+  colorEcho "Invalid server type. Please enter 'Iran' or 'Foreign'." red
+  exit 1
 fi
