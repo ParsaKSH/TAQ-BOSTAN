@@ -163,8 +163,8 @@ WantedBy=multi-user.target
 EOF
 
   sudo systemctl daemon-reload
-  sudo systemctl enable hysteria${i}
-  sudo systemctl restart hysteria${i}
+  sudo systemctl enable hysteria
+  sudo systemctl start hysteria
 
   colorEcho "Foreign server setup completed." green
 
@@ -255,8 +255,8 @@ WantedBy=multi-user.target
 EOF
 
     sudo systemctl daemon-reload
-    sudo systemctl enable hysteria${i}
-    sudo systemctl restart hysteria${i}
+    sudo systemctl enable hysteria
+    sudo systemctl start hysteria
   done
 
   colorEcho "Tunnels set up successfully." green
