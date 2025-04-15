@@ -1,168 +1,3 @@
-#!/bin/bash
-set -e
-trap 'colorEcho "Script terminated prematurely." red' ERR
-
-# ------------------ Color Output Function ------------------
-colorEcho() {
-  local text="$1"
-  local color="$2"
-  case "$color" in
-    red)     echo -e "\e[31m${text}\e[0m" ;;
-    green)   echo -e "\e[32m${text}\e[0m" ;;
-    yellow)  echo -e "\e[33m${text}\e[0m" ;;
-    blue)    echo -e "\e[34m${text}\e[0m" ;;
-    magenta) echo -e "\e[35m${text}\e[0m" ;;
-    cyan)    echo -e "\e[36m${text}\e[0m" ;;
-    *)       echo "$text" ;;
-  esac
-}
-
-# ------------------ Initialization ------------------
-ARCH=$(uname -m)
-HYSTERIA_VERSION_AMD64="https://github.com/apernet/hysteria/releases/download/app%2Fv2.6.1/hysteria-linux-amd64"
-HYSTERIA_VERSION_ARM="https://github.com/apernet/hysteria/releases/download/app%2Fv2.6.1/hysteria-linux-arm"
-HYSTERIA_VERSION_ARM64="https://github.com/apernet/hysteria/releases/download/app%2Fv2.6.1/hysteria-linux-arm64"
-
-case "$ARCH" in
-  x86_64)   DOWNLOAD_URL="$HYSTERIA_VERSION_AMD64" ;;
-  armv7l|armv6l) DOWNLOAD_URL="$HYSTERIA_VERSION_ARM" ;;
-  aarch64)  DOWNLOAD_URL="$HYSTERIA_VERSION_ARM64" ;;
-  *)
-    colorEcho "Unsupported architecture: $ARCH" red
-    exit 1
-    ;;
-esac
-
-colorEcho "Downloading Hysteria binary for: $ARCH" cyan
-if ! curl -fsSL "$DOWNLOAD_URL" -o hysteria; then
-  colorEcho "Failed to download hysteria binary." red
-  exit 1
-fi
-chmod +x hysteria
-sudo mv hysteria /usr/local/bin/
-
-sudo mkdir -p /etc/hysteria/
-
-# ------------------ Server Type Menu ------------------
-while true; do
-  echo ""
-  echo "Select server type:"
-  echo "  [1] Iran"
-  echo "  [2] Foreign"
-  echo "  [3] Exit"
-  read -rp "Enter your choice [1-3]: " SERVER_CHOICE
-
-  case "$SERVER_CHOICE" in
-    1)
-      SERVER_TYPE="iran"
-      break
-      ;;
-    2)
-      SERVER_TYPE="foreign"
-      break
-      ;;
-    3)
-      colorEcho "Exiting..." yellow
-      exit 0
-      ;;
-    *)
-      colorEcho "Invalid selection. Please enter 1, 2, or 3." red
-      ;;
-  esac
-done
-
-# ------------------ IP Version Menu (Only for Iran) ------------------
-if [ "$SERVER_TYPE" == "iran" ]; then
-  while true; do
-    echo ""
-    echo "Select IP version for remote connection:"
-    echo "  [1] IPv4"
-    echo "  [2] IPv6"
-    read -rp "Enter your choice [1-2]: " IP_VERSION_CHOICE
-
-    case "$IP_VERSION_CHOICE" in
-      1)
-        REMOTE_IP="0.0.0.0"
-        break
-        ;;
-      2)
-        REMOTE_IP="[::]"
-        break
-        ;;
-      *)
-        colorEcho "Invalid selection. Please enter 1 or 2." red
-        ;;
-    esac
-  done
-fi
-
-if [ "$SERVER_TYPE" == "foreign" ]; then
-  colorEcho "Setting up foreign server..." green
-
-  if ! command -v openssl &> /dev/null; then
-    sudo apt update -y && sudo apt install -y openssl
-  fi
-
-  colorEcho "Generating self-signed certificate..." cyan
-  sudo openssl req -x509 -nodes -days 3650 -newkey ed25519 \
-    -keyout /etc/hysteria/self.key \
-    -out /etc/hysteria/self.crt \
-    -subj "/CN=myserver"
-
-  while true; do
-    read -p "Enter Hysteria port ex.(443) or (1-65535): " H_PORT
-    if [[ "$H_PORT" =~ ^[0-9]+$ ]] && (( H_PORT > 0 && H_PORT < 65536 )); then
-      break
-    else
-      colorEcho "Invalid port. Try again." red
-    fi
-  done
-
-  read -p "Enter password: " H_PASSWORD
-
-  cat << EOF | sudo tee /etc/hysteria/server-config.yaml > /dev/null
-listen: ":$H_PORT"
-tls:
-  cert: /etc/hysteria/self.crt
-  key: /etc/hysteria/self.key
-auth:
-  type: password
-  password: "$H_PASSWORD"
-quic:
-  initStreamReceiveWindow: 67108864
-  maxStreamReceiveWindow: 67108864
-  initConnReceiveWindow: 134217728
-  maxConnReceiveWindow: 134217728
-  maxIdleTimeout: 20s
-  keepAliveInterval: 15s
-  disablePathMTUDiscovery: false
-speedTest: true
-EOF
-
-  cat << EOF | sudo tee /etc/systemd/system/hysteria.service > /dev/null
-[Unit]
-Description=Hysteria2 Tunnel Service
-After=network.target
-
-[Service]
-Type=simple
-ExecStart=/usr/local/bin/hysteria server -c /etc/hysteria/server-config.yaml
-Restart=always
-RestartSec=5
-LimitNOFILE=1048576
-StandardOutput=file:/var/log/hysteria.log
-StandardError=file:/var/log/hysteria.err
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-  sudo systemctl daemon-reload
-  sudo systemctl enable hysteria
-  sudo systemctl start hysteria
-
-  colorEcho "Foreign server setup completed." green
-
 elif [ "$SERVER_TYPE" == "iran" ]; then
   colorEcho "Setting up Iranian server..." green
 
@@ -189,14 +24,15 @@ elif [ "$SERVER_TYPE" == "iran" ]; then
 
     for (( p=1; p<=PORT_COUNT; p++ )); do
       read -p "Tunnel ports for Forward ex.(2053) #$p: " TUNNEL_PORT
-      # Check if the port is in use
+
       if sudo lsof -i :$TUNNEL_PORT > /dev/null; then
         colorEcho "Port $TUNNEL_PORT is in use. Proceeding anyway..." yellow
       fi
-      TCP_FORWARD+="  - listen: 0.0.0.0:$TUNNEL_PORT"$'\n'
-      TCP_FORWARD+="    remote: '$REMOTE_IP:$TUNNEL_PORT'"$'\n'
-      UDP_FORWARD+="  - listen: 0.0.0.0:$TUNNEL_PORT"$'\n'
-      UDP_FORWARD+="    remote: '$REMOTE_IP:$TUNNEL_PORT'"$'\n'
+
+      FORWARD_ENTRY="  - listen: 0.0.0.0:$TUNNEL_PORT\n    remote: \"$REMOTE_IP:$TUNNEL_PORT\"\n"
+
+      TCP_FORWARD+="$FORWARD_ENTRY"
+      UDP_FORWARD+="$FORWARD_ENTRY"
     done
 
     CONFIG_FILE="/etc/hysteria/iran-config${i}.yaml"
@@ -217,9 +53,9 @@ quic:
   keepAliveInterval: 15s
   disablePathMTUDiscovery: false
 speedTest: true
-tcpForwarding:
+tcpForwarding: |
 $TCP_FORWARD
-udpForwarding:
+udpForwarding: |
 $UDP_FORWARD
 EOF
 
@@ -247,7 +83,3 @@ EOF
   done
 
   colorEcho "Tunnels set up successfully." green
-else
-  colorEcho "Invalid server type. Please enter 'Iran' or 'Foreign'." red
-  exit 1
-fi
