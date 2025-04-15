@@ -141,12 +141,17 @@ auth:
   password: "$H_PASSWORD"
 quic:
   initStreamReceiveWindow: 67108864
-  maxStreamReceiveWindow: 67108864
+  maxStreamReceiveWindow: 134217728
   initConnReceiveWindow: 134217728
-  maxConnReceiveWindow: 134217728
-  maxIdleTimeout: 11s
-  keepAliveInterval: 10s
+  maxConnReceiveWindow: 268435456
+  maxIdleTimeout: 15s
+  keepAliveInterval: 8s
   disablePathMTUDiscovery: false
+  congestionControl: bbr
+  maxIncomingStreams: 2048
+  maxIncomingUniStreams: 1024
+  maxDatagramFrameSize: 1350
+
 speedTest: true
 EOF
 
@@ -238,12 +243,16 @@ tls:
   insecure: true
 quic:
   initStreamReceiveWindow: 67108864
-  maxStreamReceiveWindow: 67108864
+  maxStreamReceiveWindow: 134217728
   initConnReceiveWindow: 134217728
-  maxConnReceiveWindow: 134217728
-  maxIdleTimeout: 11s
-  keepAliveInterval: 10s
+  maxConnReceiveWindow: 268435456
+  maxIdleTimeout: 15s
+  keepAliveInterval: 8s
   disablePathMTUDiscovery: false
+  congestionControl: bbr
+  maxIncomingStreams: 2048
+  maxIncomingUniStreams: 1024
+  maxDatagramFrameSize: 1350
 
 tcpForwarding:
 $TCP_FORWARD
