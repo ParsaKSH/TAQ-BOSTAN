@@ -96,6 +96,7 @@ if [ "$SERVER_TYPE" == "iran" ]; then
   done
 fi
 
+# ------------------ Foreign Server Setup ------------------
 if [ "$SERVER_TYPE" == "foreign" ]; then
   colorEcho "Setting up foreign server..." green
 
@@ -163,6 +164,7 @@ EOF
 
   colorEcho "Foreign server setup completed." green
 
+# ------------------ Iranian Client Setup ------------------
 elif [ "$SERVER_TYPE" == "iran" ]; then
   colorEcho "Setting up Iranian server..." green
 
@@ -182,28 +184,21 @@ elif [ "$SERVER_TYPE" == "iran" ]; then
     read -p "Hysteria Port ex.(443): " PORT
     read -p "Password: " PASSWORD
     read -p "SNI ex.(google.com): " SNI
-    read -p "How many ports do you want to tunnel for this server? " PORT_FORWARD_COUNT
+    read -p "Number of ports for Forward ex.(1): " PORT_COUNT
 
     TCP_FORWARD=""
     UDP_FORWARD=""
-    FORWARDED_PORTS=""
 
-    for (( p=1; p<=$PORT_FORWARD_COUNT; p++ ))
-    do
-      read -p "Enter port number #$p you want to tunnel: " TUNNEL_PORT
+    for (( p=1; p<=PORT_COUNT; p++ )); do
+      read -p "Tunnel ports for Forward ex.(2053) #$p: " TUNNEL_PORT
 
-      TCP_FORWARD+="  - listen: 0.0.0.0:$TUNNEL_PORT
-remote: '$REMOTE_IP:$TUNNEL_PORT'
-"
-      UDP_FORWARD+="  - listen: 0.0.0.0:$TUNNEL_PORT
-remote: '$REMOTE_IP:$TUNNEL_PORT'
-"
-
-      if [ -z "$FORWARDED_PORTS" ]; then
-        FORWARDED_PORTS="$TUNNEL_PORT"
-      else
-        FORWARDED_PORTS="$FORWARDED_PORTS, $TUNNEL_PORT"
+      if sudo lsof -i :$TUNNEL_PORT > /dev/null; then
+        colorEcho "Port $TUNNEL_PORT is in use. Proceeding anyway..." yellow
       fi
+
+      FORWARD_ENTRY="  - listen: 0.0.0.0:$TUNNEL_PORT\n    remote: \"$REMOTE_IP:$TUNNEL_PORT\"\n"
+      TCP_FORWARD+="$FORWARD_ENTRY"
+      UDP_FORWARD+="$FORWARD_ENTRY"
     done
 
     CONFIG_FILE="/etc/hysteria/iran-config${i}.yaml"
@@ -224,9 +219,9 @@ quic:
   keepAliveInterval: 15s
   disablePathMTUDiscovery: false
 speedTest: true
-tcpForwarding:
+tcpForwarding: |
 $TCP_FORWARD
-udpForwarding:
+udpForwarding: |
 $UDP_FORWARD
 EOF
 
