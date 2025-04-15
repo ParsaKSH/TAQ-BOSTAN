@@ -230,9 +230,9 @@ quic:
   keepAliveInterval: 15s
   disablePathMTUDiscovery: false
 speedTest: true
-tcpForwarding: |
+tcpForwarding:
 $TCP_FORWARD
-udpForwarding: |
+udpForwarding:
 $UDP_FORWARD
 EOF
 
