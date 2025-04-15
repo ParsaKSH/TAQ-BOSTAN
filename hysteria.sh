@@ -1,6 +1,5 @@
 #!/bin/bash
 set -e
-trap 'colorEcho "Script terminated prematurely." red' ERR
 
 # ------------------ Color Output Function ------------------
 colorEcho() {
@@ -172,10 +171,10 @@ elif [ "$SERVER_TYPE" == "iran" ]; then
     colorEcho "Foreign server #$i:" cyan
     while true; do
       read -p "Enter IP Address for Foreign server: " SERVER_ADDRESS
-      if [[ "$SERVER_ADDRESS" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ || "$SERVER_ADDRESS" =~ ^[0-9a-fA-F:]+$ ]]; then
+      if [[ "$SERVER_ADDRESS" =~ ^[0-9a-fA-F:\.]+$ ]]; then
         break
       else
-        colorEcho "Invalid IP address" red
+        colorEcho "Invalid IP address " red
       fi
     done
 
@@ -188,15 +187,11 @@ elif [ "$SERVER_TYPE" == "iran" ]; then
     UDP_FORWARD=""
 
     for (( p=1; p<=PORT_COUNT; p++ )); do
-      while true; do
-        read -p "Tunnel ports for Forward ex.(2053) #$p: " TUNNEL_PORT
-        if ss -tuln | grep -q ":$TUNNEL_PORT"; then
-          colorEcho "Port $TUNNEL_PORT is already in use. Choose another one." red
-        else
-          break
-        fi
-      done
-
+      read -p "Tunnel ports for Forward ex.(2053) #$p: " TUNNEL_PORT
+      # Check if the port is in use
+      if sudo lsof -i :$TUNNEL_PORT > /dev/null; then
+        colorEcho "Port $TUNNEL_PORT is in use. Proceeding anyway..." yellow
+      fi
       TCP_FORWARD+="  - listen: 0.0.0.0:$TUNNEL_PORT"$'\n'
       TCP_FORWARD+="    remote: '$REMOTE_IP:$TUNNEL_PORT'"$'\n'
       UDP_FORWARD+="  - listen: 0.0.0.0:$TUNNEL_PORT"$'\n'
@@ -250,8 +245,5 @@ EOF
     sudo systemctl start hysteria${i}
   done
 
-  colorEcho "Tunnels set up successfully." green
-else
-  colorEcho "Invalid server type. Please enter 'Iran' or 'Foreign'." red
-  exit 1
+  colorEcho "Iranian server setup completed." green
 fi
