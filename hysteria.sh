@@ -169,7 +169,7 @@ WantedBy=multi-user.target
 EOF
 
   sudo systemctl daemon-reload
-  sudo systemctl enable hysteria
+  sudo systemctl enable --now hysteria
   if systemctl is-active --quiet hysteria; then
     sudo systemctl reload-or-restart hysteria
   else
@@ -270,7 +270,7 @@ WantedBy=multi-user.target
 EOF
 
     sudo systemctl daemon-reload
-    sudo systemctl enable hysteria${i}
+    sudo systemctl enable --now hysteria${i}
     if systemctl is-active --quiet hysteria${i}; then
       sudo systemctl reload-or-restart hysteria${i}
     else
