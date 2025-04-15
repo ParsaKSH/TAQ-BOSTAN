@@ -41,6 +41,7 @@ print_art() {
   echo -e "\033[1;33mLove Iran :)"
   echo -e "\033[0m"
 }
+
 print_menu() {
   draw_green_line
   echo -e "${GREEN}|${RESET}              ${BOLD_GREEN}TAQ-BOSTAN Main Menu${RESET}                  ${GREEN}|${RESET}"
@@ -81,14 +82,15 @@ execute_option() {
       done
       sudo rm /etc/hysteria/server-config.yaml 2>/dev/null
       for i in {1..8}; do
-      sudo rm /etc/hysteria/iran-config$i.yaml 2>/dev/null
+        sudo rm /etc/hysteria/iran-config$i.yaml 2>/dev/null
+      done
       echo -e "${GREEN}Hysteria tunnel successfully deleted.${RESET}"
       reboot_choice=$(ask_yes_no "Operation completed successfully. Please reboot the system")
       if [ "$reboot_choice" == "yes" ]; then
         echo -e "\033[1;33mRebooting the system...\033[0m"
         sudo reboot
       else 
-        echo -e
+        echo -e ""
       fi
       ;;
     5)
@@ -137,4 +139,3 @@ print_art
 print_menu
 read -p "$(echo -e "${WHITE}Select an option [1-7]: ${RESET}")" user_choice
 execute_option "$user_choice"
-
