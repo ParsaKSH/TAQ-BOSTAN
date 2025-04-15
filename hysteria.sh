@@ -172,7 +172,7 @@ EOF
   sudo systemctl daemon-reload
   sudo systemctl enable hysteria
   if systemctl is-active --quiet hysteria; then
-    sudo systemctl restart hysteria
+    sudo systemctl reload-or-restart hysteria
   else
     sudo systemctl start hysteria
   fi
@@ -273,7 +273,7 @@ EOF
     sudo systemctl daemon-reload
     sudo systemctl enable hysteria${i}
     if systemctl is-active --quiet hysteria${i}; then
-      sudo systemctl restart hysteria${i}
+      sudo systemctl reload-or-restart hysteria${i}
     else
       sudo systemctl start hysteria${i}
     fi
