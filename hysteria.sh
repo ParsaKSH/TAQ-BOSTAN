@@ -1,6 +1,6 @@
 #!/bin/bash
 set -Eeuo pipefail
-trap 'colorEcho "Script terminated prematurely." red' ERR
+trap 'colorEcho "Script terminated prematurely." red' ERR SIGINT SIGTERM
 
 # ------------------ Color Output Function ------------------
 colorEcho() {
@@ -111,8 +111,7 @@ if [ "$SERVER_TYPE" == "foreign" ]; then
     -keyout /etc/hysteria/self.key \
     -out /etc/hysteria/self.crt \
     -subj "/CN=myserver"
-  sudo chmod 600 /etc/hysteria/self.key
-  sudo chmod 600 /etc/hysteria/self.crt
+  sudo chmod 600 /etc/hysteria/self.*
 
   while true; do
     read -p "Enter Hysteria port ex.(443) or (1-65535): " H_PORT
