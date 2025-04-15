@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -Eeuo pipefail
 trap 'colorEcho "Script terminated prematurely." red' ERR
 
 # ------------------ Color Output Function ------------------
@@ -42,6 +42,8 @@ chmod +x hysteria
 sudo mv hysteria /usr/local/bin/
 
 sudo mkdir -p /etc/hysteria/
+sudo mkdir -p /var/log/
+sudo mkdir -p /var/log/hysteria/
 
 # ------------------ Server Type Menu ------------------
 while true; do
@@ -86,7 +88,7 @@ if [ "$SERVER_TYPE" == "iran" ]; then
         break
         ;;
       2)
-        REMOTE_IP="[::]"
+        REMOTE_IP="::"
         break
         ;;
       *)
@@ -109,6 +111,8 @@ if [ "$SERVER_TYPE" == "foreign" ]; then
     -keyout /etc/hysteria/self.key \
     -out /etc/hysteria/self.crt \
     -subj "/CN=myserver"
+  sudo chmod 600 /etc/hysteria/self.key
+  sudo chmod 600 /etc/hysteria/self.crt
 
   while true; do
     read -p "Enter Hysteria port ex.(443) or (1-65535): " H_PORT
