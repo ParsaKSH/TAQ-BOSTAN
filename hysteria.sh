@@ -148,8 +148,8 @@ quic:
   keepAliveInterval: 10s
   disablePathMTUDiscovery: true
   congestionControl: bbr
-  maxIncomingStreams: 512
-  maxIncomingUniStreams: 256
+  maxIncomingStreams: 1024
+  maxIncomingUniStreams: 512
   maxDatagramFrameSize: 8940
 
 speedTest: true
@@ -250,8 +250,8 @@ quic:
   keepAliveInterval: 10s
   disablePathMTUDiscovery: true
   congestionControl: bbr
-  maxIncomingStreams: 512
-  maxIncomingUniStreams: 256
+  maxIncomingStreams: 1024
+  maxIncomingUniStreams: 512
   maxDatagramFrameSize: 8940
 
 tcpForwarding:
