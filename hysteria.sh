@@ -98,6 +98,22 @@ if [ "$SERVER_TYPE" == "iran" ]; then
   done
 fi
 
+# ------------------ Obfuscation Option ------------------
+read -p "Do you want to enable Obfuscation (obfs)? [y/N]: " ENABLE_OBFS
+ENABLE_OBFS=$(echo "$ENABLE_OBFS" | tr '[:upper:]' '[:lower:]')
+
+if [[ "$ENABLE_OBFS" == "y" || "$ENABLE_OBFS" == "yes" ]]; then
+  OBFS_CONFIG=$(cat <<EOF
+obfs:
+  type: salamander
+  salamander:
+    password: "__REPLACE_PASSWORD__"
+EOF
+)
+else
+  OBFS_CONFIG=""
+fi
+
 # ------------------ Foreign Server Setup ------------------
 if [ "$SERVER_TYPE" == "foreign" ]; then
   colorEcho "Setting up foreign server..." green
@@ -139,6 +155,7 @@ tls:
 auth:
   type: password
   password: "$H_PASSWORD"
+$(echo "$OBFS_CONFIG" | sed "s/__REPLACE_PASSWORD__/$H_PASSWORD/")
 quic:
   initStreamReceiveWindow: 8388608
   maxStreamReceiveWindow: 16777216
@@ -174,12 +191,11 @@ WantedBy=multi-user.target
 EOF
 
   sudo systemctl daemon-reload
-  sudo systemctl enable --now hysteria
-  if systemctl is-active --quiet hysteria; then
-    sudo systemctl reload-or-restart hysteria
-  else
-    sudo systemctl start hysteria
-  fi
+  sudo systemctl enable hysteria
+  sudo systemctl start hysteria
+  sudo systemctl reload-or-restart hysteria
+  (crontab -l 2>/dev/null | grep -v 'systemctl restart hysteria'; echo "0 */3 * * * /usr/bin/systemctl restart hysteria") | crontab -
+
 
   colorEcho "Foreign server setup completed." green
 
@@ -241,6 +257,7 @@ auth: "$PASSWORD"
 tls:
   sni: "$SNI"
   insecure: true
+$(echo "$OBFS_CONFIG" | sed "s/__REPLACE_PASSWORD__/$PASSWORD/")
 quic:
   initStreamReceiveWindow: 8388608
   maxStreamReceiveWindow: 16777216
@@ -279,12 +296,11 @@ WantedBy=multi-user.target
 EOF
 
     sudo systemctl daemon-reload
-    sudo systemctl enable --now hysteria${i}
-    if systemctl is-active --quiet hysteria${i}; then
-      sudo systemctl reload-or-restart hysteria${i}
-    else
-      sudo systemctl start hysteria${i}
-    fi
+    sudo systemctl enable hysteria${i}
+    sudo systemctl start hysteria${i}
+    sudo systemctl reload-or-restart hysteria${i}
+    (crontab -l 2>/dev/null | grep -v 'systemctl restart hysteria'; echo "0 */4 * * * /usr/bin/systemctl restart hysteria${i}") | crontab -
+
   done
 
   colorEcho "Tunnels set up successfully." green
