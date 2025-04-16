@@ -17,33 +17,62 @@ colorEcho() {
   esac
 }
 
-# ------------------ Initialization ------------------
-ARCH=$(uname -m)
-HYSTERIA_VERSION_AMD64="https://github.com/apernet/hysteria/releases/download/app%2Fv2.6.1/hysteria-linux-amd64"
-HYSTERIA_VERSION_ARM="https://github.com/apernet/hysteria/releases/download/app%2Fv2.6.1/hysteria-linux-arm"
-HYSTERIA_VERSION_ARM64="https://github.com/apernet/hysteria/releases/download/app%2Fv2.6.1/hysteria-linux-arm64"
+# ------------------ Main Menu ------------------
+while true; do
+  echo ""
+  echo "Main Menu:"
+  echo "  [1] Install Hysteria"
+  echo "  [2] Reconfigure Hysteria (Iran or Foreign)"
+  echo "  [3] Exit"
+  read -rp "Enter your choice [1-3]: " MAIN_CHOICE
 
-case "$ARCH" in
-  x86_64)   DOWNLOAD_URL="$HYSTERIA_VERSION_AMD64" ;;
-  armv7l|armv6l) DOWNLOAD_URL="$HYSTERIA_VERSION_ARM" ;;
-  aarch64)  DOWNLOAD_URL="$HYSTERIA_VERSION_ARM64" ;;
-  *)
-    colorEcho "Unsupported architecture: $ARCH" red
+  case "$MAIN_CHOICE" in
+    1)
+      INSTALL_MODE=true
+      break
+      ;;
+    2)
+      INSTALL_MODE=false
+      break
+      ;;
+    3)
+      colorEcho "Exiting..." yellow
+      exit 0
+      ;;
+    *)
+      colorEcho "Invalid selection. Please enter 1, 2, or 3." red
+      ;;
+  esac
+done
+
+# ------------------ Download & Install Hysteria (if selected) ------------------
+if [ "$INSTALL_MODE" = true ]; then
+  ARCH=$(uname -m)
+  HYSTERIA_VERSION_AMD64="https://github.com/apernet/hysteria/releases/download/app%2Fv2.6.1/hysteria-linux-amd64"
+  HYSTERIA_VERSION_ARM="https://github.com/apernet/hysteria/releases/download/app%2Fv2.6.1/hysteria-linux-arm"
+  HYSTERIA_VERSION_ARM64="https://github.com/apernet/hysteria/releases/download/app%2Fv2.6.1/hysteria-linux-arm64"
+
+  case "$ARCH" in
+    x86_64)   DOWNLOAD_URL="$HYSTERIA_VERSION_AMD64" ;;
+    armv7l|armv6l) DOWNLOAD_URL="$HYSTERIA_VERSION_ARM" ;;
+    aarch64)  DOWNLOAD_URL="$HYSTERIA_VERSION_ARM64" ;;
+    *)
+      colorEcho "Unsupported architecture: $ARCH" red
+      exit 1
+      ;;
+  esac
+
+  colorEcho "Downloading Hysteria binary for: $ARCH" cyan
+  if ! curl -fsSL "$DOWNLOAD_URL" -o hysteria; then
+    colorEcho "Failed to download hysteria binary." red
     exit 1
-    ;;
-esac
-
-colorEcho "Downloading Hysteria binary for: $ARCH" cyan
-if ! curl -fsSL "$DOWNLOAD_URL" -o hysteria; then
-  colorEcho "Failed to download hysteria binary." red
-  exit 1
+  fi
+  chmod +x hysteria
+  sudo mv hysteria /usr/local/bin/
+  sudo mkdir -p /etc/hysteria/
+  sudo mkdir -p /var/log/hysteria/
+  sudo mkdir -p /var/log/
 fi
-chmod +x hysteria
-sudo mv hysteria /usr/local/bin/
-
-sudo mkdir -p /etc/hysteria/
-sudo mkdir -p /var/log/hysteria/
-sudo mkdir -p /var/log/
 
 # ------------------ Server Type Menu ------------------
 while true; do
