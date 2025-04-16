@@ -140,17 +140,17 @@ auth:
   type: password
   password: "$H_PASSWORD"
 quic:
-  initStreamReceiveWindow: 33554432
-  maxStreamReceiveWindow: 67108864
-  initConnReceiveWindow: 67108864
-  maxConnReceiveWindow: 134217728
+  initStreamReceiveWindow: 16777216
+  maxStreamReceiveWindow: 33554432
+  initConnReceiveWindow: 33554432
+  maxConnReceiveWindow: 67108864
   maxIdleTimeout: 15s
   keepAliveInterval: 10s
   disablePathMTUDiscovery: true
   congestionControl: bbr
-  maxIncomingStreams: 2048
-  maxIncomingUniStreams: 1024
-  maxDatagramFrameSize: 1350
+  maxIncomingStreams: 4096
+  maxIncomingUniStreams: 2048
+  maxDatagramFrameSize: 8940
 
 speedTest: true
 EOF
@@ -242,17 +242,17 @@ tls:
   sni: "$SNI"
   insecure: true
 quic:
-  initStreamReceiveWindow: 33554432
-  maxStreamReceiveWindow: 67108864
-  initConnReceiveWindow: 67108864
-  maxConnReceiveWindow: 134217728
+  initStreamReceiveWindow: 16777216
+  maxStreamReceiveWindow: 33554432
+  initConnReceiveWindow: 33554432
+  maxConnReceiveWindow: 67108864
   maxIdleTimeout: 15s
   keepAliveInterval: 10s
   disablePathMTUDiscovery: true
   congestionControl: bbr
-  maxIncomingStreams: 2048
-  maxIncomingUniStreams: 1024
-  maxDatagramFrameSize: 1350
+  maxIncomingStreams: 4096
+  maxIncomingUniStreams: 2048
+  maxDatagramFrameSize: 8940
 
 tcpForwarding:
 $TCP_FORWARD
