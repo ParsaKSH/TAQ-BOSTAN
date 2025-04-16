@@ -160,6 +160,7 @@ quic:
   maxIdleTimeout: 15s
   keepAliveInterval: 10s
   disablePathMTUDiscovery: false
+  maxDatagramFrameSize: 1452
 EOF
 )
     ;;
@@ -173,6 +174,7 @@ quic:
   maxIdleTimeout: 15s
   keepAliveInterval: 10s
   disablePathMTUDiscovery: false
+  maxDatagramFrameSize: 1452
 EOF
 )
     ;;
