@@ -96,8 +96,95 @@ draw_menu "Server Type Selection" \
   read -r SERVER_CHOICE
   case "$SERVER_CHOICE" in
     1)
-      SERVER_TYPE="iran"
-      break
+      while true; do
+        draw_menu "Iranian Server Options" \
+          "1 | Create New Tunnel" \
+          "2 | Edate tunnel list" \
+          "3 | Exit"
+        read -r IRAN_CHOICE
+        case "$IRAN_CHOICE" in
+          1)
+            SERVER_TYPE="iran"
+            break 2
+            ;;
+          2)
+            colorEcho "Managing existing tunnels..." cyan
+            # List existing tunnels
+            echo "Existing tunnels:"
+            for i in {1..9}; do
+              if [ -f "/etc/hysteria/iran-config${i}.yaml" ]; then
+                echo -e "\n=== Tunnel #${i} ==="
+                grep "server:" "/etc/hysteria/iran-config${i}.yaml" | cut -d'"' -f2
+                grep "auth:" "/etc/hysteria/iran-config${i}.yaml" | cut -d'"' -f2
+                echo "Status: $(systemctl is-active hysteria${i})"
+              fi
+            done
+            
+            # Manage tunnels
+            echo -e "\nWhat would you like to do?"
+            echo "1) Edit a tunnel"
+            echo "2) Delete a tunnel"
+            echo "3) Back to main menu"
+            read -r MANAGE_CHOICE
+            
+            case "$MANAGE_CHOICE" in
+              1)
+                read -p "Enter tunnel number to edit (1-9): " TUNNEL_NUM
+                if [ -f "/etc/hysteria/iran-config${TUNNEL_NUM}.yaml" ]; then
+                  # Edit tunnel configuration
+                  while true; do
+                    read -p "Enter new server address (or press Enter to keep current): " NEW_SERVER
+                    read -p "Enter new password (or press Enter to keep current): " NEW_PASSWORD
+                    read -p "Enter new SNI (or press Enter to keep current): " NEW_SNI
+                    
+                    if [ ! -z "$NEW_SERVER" ]; then
+                      sed -i "s|server: .*|server: \"$NEW_SERVER\"|" "/etc/hysteria/iran-config${TUNNEL_NUM}.yaml"
+                    fi
+                    if [ ! -z "$NEW_PASSWORD" ]; then
+                      sed -i "s|auth: .*|auth: \"$NEW_PASSWORD\"|" "/etc/hysteria/iran-config${TUNNEL_NUM}.yaml"
+                    fi
+                    if [ ! -z "$NEW_SNI" ]; then
+                      sed -i "s|sni: .*|sni: \"$NEW_SNI\"|" "/etc/hysteria/iran-config${TUNNEL_NUM}.yaml"
+                    fi
+                    
+                    systemctl restart hysteria${TUNNEL_NUM}
+                    colorEcho "Tunnel #${TUNNEL_NUM} updated and restarted." green
+                    break
+                  done
+                else
+                  colorEcho "Tunnel #${TUNNEL_NUM} does not exist." red
+                fi
+                ;;
+              2)
+                read -p "Enter tunnel number to delete (1-9): " TUNNEL_NUM
+                if [ -f "/etc/hysteria/iran-config${TUNNEL_NUM}.yaml" ]; then
+                  systemctl stop hysteria${TUNNEL_NUM}
+                  systemctl disable hysteria${TUNNEL_NUM}
+                  rm "/etc/hysteria/iran-config${TUNNEL_NUM}.yaml"
+                  rm "/etc/systemd/system/hysteria${TUNNEL_NUM}.service"
+                  systemctl daemon-reload
+                  colorEcho "Tunnel #${TUNNEL_NUM} deleted." green
+                else
+                  colorEcho "Tunnel #${TUNNEL_NUM} does not exist." red
+                fi
+                ;;
+              3)
+                continue
+                ;;
+              *)
+                colorEcho "Invalid choice." red
+                ;;
+            esac
+            ;;
+          3)
+            colorEcho "Exiting..." yellow
+            exit 0
+            ;;
+          *)
+            colorEcho "Invalid selection. Please enter 1, 2, or 3." red
+            ;;
+        esac
+      done
       ;;
     2)
       SERVER_TYPE="foreign"
@@ -116,23 +203,39 @@ done
 # ------------------ IP Version Menu (Only for Iran) ------------------
 if [ "$SERVER_TYPE" == "iran" ]; then
   while true; do
-draw_menu "IP Version Selection" \
+    # Scan for existing tunnels and find the next available number
+    NEXT_TUNNEL=1
+    for i in {1..9}; do
+      if [ -f "/etc/hysteria/iran-config${i}.yaml" ]; then
+        NEXT_TUNNEL=$((i + 1))
+      fi
+    done
+    
+    colorEcho "Next available tunnel number: $NEXT_TUNNEL" cyan
+    
+    draw_menu "IP Version Selection" \
       "1 | IPv4" \
-      "2 | IPv6"
+      "2 | IPv6" \
+      "3 | Exit"
     read -r IP_VERSION_CHOICE
-
 
     case "$IP_VERSION_CHOICE" in
       1)
         REMOTE_IP="0.0.0.0"
+        export NEXT_TUNNEL
         break
         ;;
       2)
         REMOTE_IP="[::]"
+        export NEXT_TUNNEL
         break
         ;;
+      3)
+        # Return to previous menu
+        continue 2
+        ;;
       *)
-        colorEcho "Invalid selection. Please enter 1 or 2." red
+        colorEcho "Invalid selection. Please enter 1, 2, or 3." red
         ;;
     esac
   done
@@ -353,8 +456,9 @@ elif [ "$SERVER_TYPE" == "iran" ]; then
       fi
     done
 
-    CONFIG_FILE="/etc/hysteria/iran-config${i}.yaml"
-    SERVICE_FILE="/etc/systemd/system/hysteria${i}.service"
+    # When creating new tunnel configuration, use NEXT_TUNNEL instead of i
+    CONFIG_FILE="/etc/hysteria/iran-config${NEXT_TUNNEL}.yaml"
+    SERVICE_FILE="/etc/systemd/system/hysteria${NEXT_TUNNEL}.service"
 
     cat << EOF | sudo tee "$CONFIG_FILE" > /dev/null
 server: "$SERVER_ADDRESS:$PORT"
@@ -389,10 +493,10 @@ WantedBy=multi-user.target
 EOF
 
     sudo systemctl daemon-reload
-    sudo systemctl enable hysteria${i}
-    sudo systemctl start hysteria${i}
-    sudo systemctl reload-or-restart hysteria${i}
-    CRON_CMD="0 */5 * * * /usr/bin/systemctl restart hysteria${i}"
+    sudo systemctl enable hysteria${NEXT_TUNNEL}
+    sudo systemctl start hysteria${NEXT_TUNNEL}
+    sudo systemctl reload-or-restart hysteria${NEXT_TUNNEL}
+    CRON_CMD="0 */5 * * * /usr/bin/systemctl restart hysteria${NEXT_TUNNEL}"
     TMP_FILE=$(mktemp)
 
     crontab -l 2>/dev/null | grep -vF "$CRON_CMD" > "$TMP_FILE" || true
