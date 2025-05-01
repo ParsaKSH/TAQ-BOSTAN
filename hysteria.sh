@@ -100,7 +100,8 @@ draw_menu "Server Type Selection" \
         draw_menu "Iranian Server Options" \
           "1 | Create New Tunnel" \
           "2 | Edate tunnel list" \
-          "3 | Exit"
+          "3 | Monitor Traffic Ports" \
+          "4 | Exit"
         read -r IRAN_CHOICE
         case "$IRAN_CHOICE" in
           1)
@@ -169,19 +170,96 @@ draw_menu "Server Type Selection" \
                 fi
                 ;;
               3)
+                clear
+                colorEcho "=== Monitoring Traffic Ports ===" cyan
+                echo ""
+                
+                # Check if net-tools is installed
+                if ! command -v netstat &> /dev/null; then
+                    colorEcho "Installing net-tools..." yellow
+                    sudo apt-get update >/dev/null 2>&1
+                    sudo apt-get install -y net-tools >/dev/null 2>&1
+                fi
+
+                # Counter for tunnels found
+                TUNNELS_FOUND=0
+
+                # Loop through possible tunnel configurations
+                for i in {1..9}; do
+                    if [ -f "/etc/hysteria/iran-config${i}.yaml" ]; then
+                        TUNNELS_FOUND=$((TUNNELS_FOUND + 1))
+                        
+                        # Print tunnel header
+                        echo "🔵 Tunnel #${i}"
+                        echo "----------------------------------------"
+                        
+                        # Get and show server address
+                        SERVER=$(grep "server:" "/etc/hysteria/iran-config${i}.yaml" | cut -d'"' -f2)
+                        echo "📡 Server: $SERVER"
+                        
+                        # Show service status
+                        if systemctl is-active --quiet hysteria${i}; then
+                            echo "🟢 Service: Active"
+                        else
+                            echo "🔴 Service: Inactive"
+                        fi
+                        
+                        echo -e "\n🔌 Ports Status:"
+                        
+                        # Check TCP ports
+                        echo "TCP Ports:"
+                        grep -A 50 "tcpForwarding:" "/etc/hysteria/iran-config${i}.yaml" | grep "listen:" | while read -r line; do
+                            PORT=$(echo "$line" | grep -o '[0-9]\+')
+                            if [ ! -z "$PORT" ]; then
+                                if netstat -tln 2>/dev/null | grep -q ":$PORT "; then
+                                    echo "   ✅ $PORT (Active)"
+                                else
+                                    echo "   ❌ $PORT (Inactive)"
+                                fi
+                            fi
+                        done
+                        
+                        # Check UDP ports
+                        echo -e "\nUDP Ports:"
+                        grep -A 50 "udpForwarding:" "/etc/hysteria/iran-config${i}.yaml" | grep "listen:" | while read -r line; do
+                            PORT=$(echo "$line" | grep -o '[0-9]\+')
+                            if [ ! -z "$PORT" ]; then
+                                if netstat -uln 2>/dev/null | grep -q ":$PORT "; then
+                                    echo "   ✅ $PORT (Active)"
+                                else
+                                    echo "   ❌ $PORT (Inactive)"
+                                fi
+                            fi
+                        done
+                        
+                        echo "----------------------------------------"
+                        echo ""
+                    fi
+                done
+
+                if [ $TUNNELS_FOUND -eq 0 ]; then
+                    colorEcho "No tunnels found!" yellow
+                fi
+
+                colorEcho "Press Enter to return to menu..." green
+                read -r
                 continue
                 ;;
+              4)
+                colorEcho "Exiting..." yellow
+                exit 0
+                ;;
               *)
-                colorEcho "Invalid choice." red
+                colorEcho "Invalid selection. Please enter 1, 2, 3, or 4." red
                 ;;
             esac
             ;;
-          3)
+          4)
             colorEcho "Exiting..." yellow
             exit 0
             ;;
           *)
-            colorEcho "Invalid selection. Please enter 1, 2, or 3." red
+            colorEcho "Invalid selection. Please enter 1, 2, 3, or 4." red
             ;;
         esac
       done
@@ -456,7 +534,7 @@ elif [ "$SERVER_TYPE" == "iran" ]; then
       fi
     done
 
-    # When creating new tunnel configuration, use NEXT_TUNNEL instead of i
+    # Create configuration and service files for this tunnel
     CONFIG_FILE="/etc/hysteria/iran-config${NEXT_TUNNEL}.yaml"
     SERVICE_FILE="/etc/systemd/system/hysteria${NEXT_TUNNEL}.service"
 
@@ -476,7 +554,7 @@ EOF
 
     cat << EOF | sudo tee "$SERVICE_FILE" > /dev/null
 [Unit]
-Description=Hysteria2 Client $i
+Description=Hysteria2 Client ${NEXT_TUNNEL}
 After=network.target
 
 [Service]
@@ -485,8 +563,8 @@ ExecStart=/usr/local/bin/hysteria client -c $CONFIG_FILE
 Restart=always
 RestartSec=5
 LimitNOFILE=1048576
-StandardOutput=file:/var/log/hysteria${i}.log
-StandardError=file:/var/log/hysteria${i}.err
+StandardOutput=file:/var/log/hysteria${NEXT_TUNNEL}.log
+StandardError=file:/var/log/hysteria${NEXT_TUNNEL}.err
 
 [Install]
 WantedBy=multi-user.target
@@ -504,6 +582,8 @@ EOF
     crontab "$TMP_FILE"
     rm -f "$TMP_FILE"
 
+    # Increment NEXT_TUNNEL for the next iteration
+    NEXT_TUNNEL=$((NEXT_TUNNEL + 1))
   done
 
   colorEcho "Tunnels set up successfully." green
