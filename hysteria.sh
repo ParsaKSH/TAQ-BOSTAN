@@ -108,7 +108,7 @@ draw_menu "Server Type Selection" \
       while true; do
         draw_menu "Iranian Server Options" \
           "1 | Create New Tunnel" \
-          "2 | Edate tunnel list" \
+          "2 | Edit tunnel list" \
           "3 | Monitor Traffic Ports" \
           "4 | Exit"
         read -r IRAN_CHOICE
@@ -538,7 +538,7 @@ elif [ "$SERVER_TYPE" == "iran" ]; then
       if [ -z "$FORWARDED_PORTS" ]; then
         FORWARDED_PORTS="$TUNNEL_PORT"
       else
-        FORWARDED_PORTS="$FORWARDED_PORTS, $TUNNEL_PORT"
+        FORWARDED_PORTS="$FORWARDED_PORTS,$TUNNEL_PORT"
       fi
     done
 
@@ -597,17 +597,19 @@ EOF
 
     colorEcho "Tunnel $i setup completed." green
   done
-  # ====== Set up per-config iptables counters ======
-while IFS=: read -r cfg ports; do
-  idx="${cfg##*config}"
-  chain="HYST${idx}"
-  iptables -t mangle -N "$chain" 2>/dev/null || iptables -t mangle -F "$chain"
+# ====== Set up per-config iptables counters ======
+while IFS='|' read -r cfg service ports; do
+  idx="${cfg##*config}"      # => "1.yaml"
+  idx="${idx%%.*}"           # => "1"
+  chain="HYST${idx}"         # => "HYST1"
+  sudo iptables -t mangle -N "$chain" 2>/dev/null || sudo iptables -t mangle -F "$chain"
   IFS=',' read -ra PARR <<< "$ports"
   for p in "${PARR[@]}"; do
-    iptables -t mangle -A OUTPUT -p tcp --dport "$p" -j "$chain"
-    iptables -t mangle -A OUTPUT -p udp --dport "$p" -j "$chain"
+    sudo iptables -t mangle -A OUTPUT -p tcp --dport "$p" -j "$chain"
+    sudo iptables -t mangle -A OUTPUT -p udp --dport "$p" -j "$chain"
   done
 done < "$MAPPING_FILE"
+
 sudo tee /etc/systemd/system/hysteria-monitor.service > /dev/null <<'EOF'
 [Unit]
 Description=Hysteria Monitor Service
