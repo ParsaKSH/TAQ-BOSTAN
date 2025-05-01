@@ -85,7 +85,16 @@ if [ -f "/usr/local/bin/hysteria" ]; then
  sudo mv hysteria /usr/local/bin/
  fi
 sudo mkdir -p /etc/hysteria/
+sudo touch /etc/hysteria/port_mapping.txt
+MAPPING_FILE="/etc/hysteria/port_mapping.txt"
+: > "$MAPPING_FILE"
 sudo mkdir -p /var/log/hysteria/
+
+if [ ! -f /etc/hysteria/hysteria-monitor.py ]; then
+  sudo curl -fsSL https://raw.githubusercontent.com/ParsaKSH/TAQ-BOSTAN/main/hysteria-monitor.py \
+    -o /etc/hysteria/hysteria-monitor.py
+  sudo chmod +x /etc/hysteria/hysteria-monitor.py
+fi
 
 # ------------------ Server Type Menu ------------------
 while true; do
@@ -573,8 +582,12 @@ EOF
     sudo systemctl enable hysteria${i}
     sudo systemctl start hysteria${i}
     sudo systemctl reload-or-restart hysteria${i}
+
     
     # Add cron job for each tunnel
+
+    echo "iran-config${i}.yaml|hysteria${i}|${FORWARDED_PORTS}" \
+    | sudo tee -a "$MAPPING_FILE" > /dev/null
     CRON_CMD="0 */5 * * * /usr/bin/systemctl restart hysteria${i}"
     TMP_FILE=$(mktemp)
     crontab -l 2>/dev/null | grep -vF "$CRON_CMD" > "$TMP_FILE" || true
@@ -584,6 +597,37 @@ EOF
 
     colorEcho "Tunnel $i setup completed." green
   done
+  # ====== Set up per-config iptables counters ======
+while IFS=: read -r cfg ports; do
+  idx="${cfg##*config}"
+  chain="HYST${idx}"
+  iptables -t mangle -N "$chain" 2>/dev/null || iptables -t mangle -F "$chain"
+  IFS=',' read -ra PARR <<< "$ports"
+  for p in "${PARR[@]}"; do
+    iptables -t mangle -A OUTPUT -p tcp --dport "$p" -j "$chain"
+    iptables -t mangle -A OUTPUT -p udp --dport "$p" -j "$chain"
+  done
+done < "$MAPPING_FILE"
+sudo tee /etc/systemd/system/hysteria-monitor.service > /dev/null <<'EOF'
+[Unit]
+Description=Hysteria Monitor Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /etc/hysteria/hysteria-monitor.py
+Restart=always
+RestartSec=10
+StandardOutput=file:/var/log/hysteria/monitor.log
+StandardError=file:/var/log/hysteria/monitor.err
+
+[Install]
+WantedBy=multi-user.target
+EOF
+sudo systemctl daemon-reload
+sudo systemctl enable hysteria-monitor
+sudo systemctl start hysteria-monitor
+
 
   colorEcho "All tunnels set up successfully." green
 else
