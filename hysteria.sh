@@ -487,7 +487,6 @@ elif [ "$SERVER_TYPE" == "iran" ]; then
     while true; do
       read -p "Enter IP Address or Domain for Foreign server: " SERVER_ADDRESS
       if [[ "$SERVER_ADDRESS" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
-  
         break
       elif [[ "$SERVER_ADDRESS" =~ ^[0-9a-fA-F:]+$ ]]; then
         SERVER_ADDRESS="[${SERVER_ADDRESS}]"
@@ -534,9 +533,9 @@ elif [ "$SERVER_TYPE" == "iran" ]; then
       fi
     done
 
-    # Create configuration and service files for this tunnel
-    CONFIG_FILE="/etc/hysteria/iran-config${NEXT_TUNNEL}.yaml"
-    SERVICE_FILE="/etc/systemd/system/hysteria${NEXT_TUNNEL}.service"
+    # Create configuration and service files for each tunnel
+    CONFIG_FILE="/etc/hysteria/iran-config${i}.yaml"
+    SERVICE_FILE="/etc/systemd/system/hysteria${i}.service"
 
     cat << EOF | sudo tee "$CONFIG_FILE" > /dev/null
 server: "$SERVER_ADDRESS:$PORT"
@@ -554,7 +553,7 @@ EOF
 
     cat << EOF | sudo tee "$SERVICE_FILE" > /dev/null
 [Unit]
-Description=Hysteria2 Client ${NEXT_TUNNEL}
+Description=Hysteria2 Client $i
 After=network.target
 
 [Service]
@@ -563,30 +562,30 @@ ExecStart=/usr/local/bin/hysteria client -c $CONFIG_FILE
 Restart=always
 RestartSec=5
 LimitNOFILE=1048576
-StandardOutput=file:/var/log/hysteria${NEXT_TUNNEL}.log
-StandardError=file:/var/log/hysteria${NEXT_TUNNEL}.err
+StandardOutput=file:/var/log/hysteria${i}.log
+StandardError=file:/var/log/hysteria${i}.err
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
     sudo systemctl daemon-reload
-    sudo systemctl enable hysteria${NEXT_TUNNEL}
-    sudo systemctl start hysteria${NEXT_TUNNEL}
-    sudo systemctl reload-or-restart hysteria${NEXT_TUNNEL}
-    CRON_CMD="0 */5 * * * /usr/bin/systemctl restart hysteria${NEXT_TUNNEL}"
+    sudo systemctl enable hysteria${i}
+    sudo systemctl start hysteria${i}
+    sudo systemctl reload-or-restart hysteria${i}
+    
+    # Add cron job for each tunnel
+    CRON_CMD="0 */5 * * * /usr/bin/systemctl restart hysteria${i}"
     TMP_FILE=$(mktemp)
-
     crontab -l 2>/dev/null | grep -vF "$CRON_CMD" > "$TMP_FILE" || true
     echo "$CRON_CMD" >> "$TMP_FILE"
     crontab "$TMP_FILE"
     rm -f "$TMP_FILE"
 
-    # Increment NEXT_TUNNEL for the next iteration
-    NEXT_TUNNEL=$((NEXT_TUNNEL + 1))
+    colorEcho "Tunnel $i setup completed." green
   done
 
-  colorEcho "Tunnels set up successfully." green
+  colorEcho "All tunnels set up successfully." green
 else
   colorEcho "Invalid server type. Please enter 'Iran' or 'Foreign'." red
   exit 1
