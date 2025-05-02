@@ -98,6 +98,8 @@ fi
 
 # ------------------ Manage Tunnels Function ------------------
 manage_tunnels() {
+  set +e
+  set +o pipefail
   colorEcho "Managing existing tunnels..." cyan
   echo "Existing tunnels:"
   for i in {1..9}; do
@@ -153,12 +155,19 @@ manage_tunnels() {
       colorEcho "Invalid choice. Returning..." red
       ;;
   esac
+  set -e
+  set -o pipefail
 }
-# ------------------ Monitor Ports Function ------------------
+
 monitor_ports() {
+
+  set +e
+  set +o pipefail
+
   clear
   colorEcho "=== Monitoring Traffic Ports ===" cyan
   echo ""
+
 
   if ! command -v netstat &> /dev/null; then
     colorEcho "Installing net-tools..." yellow
@@ -168,47 +177,52 @@ monitor_ports() {
 
   local found=0
   for i in {1..9}; do
-    if [ -f "/etc/hysteria/iran-config${i}.yaml" ]; then
-      ((found++))
-      echo "🔵 Tunnel #${i}"
-      echo "----------------------------------------"
-      local srv
-      srv=$(grep "server:" "/etc/hysteria/iran-config${i}.yaml" | cut -d'"' -f2)
-      echo "📡 Server: $srv"
-      if systemctl is-active --quiet hysteria${i}; then
-        echo "🟢 Service: Active"
-      else
-        echo "🔴 Service: Inactive"
-      fi
+    local cfg="/etc/hysteria/iran-config${i}.yaml"
+    [ -f "$cfg" ] || continue
+    ((found++))
 
-      echo -e "\n🔌 Ports Status:"
-      echo "TCP Ports:"
-      grep -A50 "tcpForwarding:" "/etc/hysteria/iran-config${i}.yaml" \
-        | grep "listen:" \
-        | while read -r line; do
-            port=$(echo "$line" | grep -o '[0-9]\+')
-            if netstat -tln | grep -q ":$port "; then
-              echo "   ✅ $port"
-            else
-              echo "   ❌ $port"
-            fi
-          done
+    echo "🔵 Tunnel #${i}"
+    echo "----------------------------------------"
 
-      echo -e "\nUDP Ports:"
-      grep -A50 "udpForwarding:" "/etc/hysteria/iran-config${i}.yaml" \
-        | grep "listen:" \
-        | while read -r line; do
-            port=$(echo "$line" | grep -o '[0-9]\+')
-            if netstat -uln | grep -q ":$port "; then
-              echo "   ✅ $port"
-            else
-              echo "   ❌ $port"
-            fi
-          done
-
-      echo "----------------------------------------"
-      echo ""
+    local srv
+    srv=$(grep "server:" "$cfg" | cut -d'"' -f2)
+    echo "📡 Server: $srv"
+    if systemctl is-active --quiet hysteria${i}; then
+      echo "🟢 Service: Active"
+    else
+      echo "🔴 Service: Inactive"
     fi
+
+    echo -e "\n🔌 Ports Status:"
+
+    echo "TCP Ports:"
+    while read -r line; do
+      port=$(echo "$line" | grep -o '[0-9]\+')
+      if netstat -tln | grep -q ":$port "; then
+        echo "   ✅ $port (Active)"
+      else
+        echo "   ❌ $port (Inactive)"
+      fi
+    done < <(
+      grep -A50 "tcpForwarding:" "$cfg" 2>/dev/null \
+      | grep "listen:" 2>/dev/null
+    )
+
+    echo -e "\nUDP Ports:"
+    while read -r line; do
+      port=$(echo "$line" | grep -o '[0-9]\+')
+      if netstat -uln | grep -q ":$port "; then
+        echo "   ✅ $port (Active)"
+      else
+        echo "   ❌ $port (Inactive)"
+      fi
+    done < <(
+      grep -A50 "udpForwarding:" "$cfg" 2>/dev/null \
+      | grep "listen:" 2>/dev/null
+    )
+
+    echo "----------------------------------------"
+    echo ""
   done
 
   if [ $found -eq 0 ]; then
@@ -217,6 +231,9 @@ monitor_ports() {
 
   colorEcho "Press Enter to return..." green
   read -r
+
+  set -e
+  set -o pipefail
 }
 
 # ------------------ Server Type Menu ------------------
@@ -236,11 +253,21 @@ draw_menu "Server Type Selection" \
           "4 | Exit"
         read -rp "> " IRAN_CHOICE
         case "$IRAN_CHOICE" in
-          1) SERVER_TYPE="iran"; break 2 ;;
-          2) manage_tunnels    ;;
-          3) monitor_ports     ;;
-          4) colorEcho "Exiting..." yellow; exit 0 ;;
-          *) colorEcho "Invalid selection. Please enter 1, 2, 3, or 4." red ;;
+          1) 
+            SERVER_TYPE="iran"; break 2
+            ;;
+          2) 
+            manage_tunnels 
+            ;;
+          3) 
+            monitor_ports     
+            ;;
+          4) 
+            colorEcho "Exiting..." yellow; exit 0 
+            ;;
+          *) 
+            colorEcho "Invalid selection. Please enter 1, 2, 3, or 4." red 
+            ;;
         esac
       done
       ;;
