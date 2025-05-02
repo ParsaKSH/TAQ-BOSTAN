@@ -85,9 +85,12 @@ if [ -f "/usr/local/bin/hysteria" ]; then
  sudo mv hysteria /usr/local/bin/
  fi
 sudo mkdir -p /etc/hysteria/
-sudo touch /etc/hysteria/port_mapping.txt
 MAPPING_FILE="/etc/hysteria/port_mapping.txt"
-: > "$MAPPING_FILE"
+sudo mkdir -p /etc/hysteria
+if [ ! -f "$MAPPING_FILE" ]; then
+  sudo touch "$MAPPING_FILE"
+  MAPPING_FILE="/etc/hysteria/port_mapping.txt"
+fi
 sudo mkdir -p /var/log/hysteria/
 
 if [ ! -f /etc/hysteria/hysteria-monitor.py ]; then
@@ -147,6 +150,7 @@ manage_tunnels() {
       else
         colorEcho "Tunnel #${TUNNEL_NUM} does not exist." red
       fi
+      sed -i "\%^iran-config${TUNNEL_NUM}\.yaml|%d" "$MAPPING_FILE"
       ;;
     3)
       return
@@ -159,6 +163,7 @@ manage_tunnels() {
   set -o pipefail
 }
 
+# ------------------ Monitor Ports Function ------------------
 monitor_ports() {
 
   set +e
