@@ -364,6 +364,7 @@ quic:
   maxConnReceiveWindow: 100663296
   maxIdleTimeout: 15s
   keepAliveInterval: 10s
+  maxIncomingStreams: 4096
   disablePathMTUDiscovery: false
 EOF
 )
@@ -377,6 +378,7 @@ quic:
   maxConnReceiveWindow: 201326592
   maxIdleTimeout: 15s
   keepAliveInterval: 10s
+  maxIncomingStreams: 8192
   disablePathMTUDiscovery: false
 EOF
 )
@@ -390,6 +392,7 @@ quic:
   maxConnReceiveWindow: 402653184
   maxIdleTimeout: 15s
   keepAliveInterval: 10s
+  maxIncomingStreams: 24576
   disablePathMTUDiscovery: false
 EOF
 )
@@ -404,6 +407,7 @@ quic:
   maxConnReceiveWindow: 100663296
   maxIdleTimeout: 15s
   keepAliveInterval: 10s
+  maxIncomingStreams: 4096
   disablePathMTUDiscovery: false
 EOF
 )
