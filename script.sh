@@ -75,7 +75,7 @@ execute_option() {
     4)
       echo -e "${CYAN}Deleting Hysteria tunnel...${RESET}"
       sudo systemctl daemon-reload 2>/dev/null
-      for i in {,1,2,3,4,5,6,7,8,9}; do
+      for i in {1..9}; do
         sudo systemctl disable hysteria$i 2>/dev/null
         sudo systemctl disable hysteria 2>/dev/null
       done
@@ -90,7 +90,7 @@ execute_option() {
       ;;
      5)
        echo -e "${CYAN}Deleting local IPv6 with Sit...${RESET}"
-       for i in {,1,2,3,4,5,6,7,8}; do
+       for i in {1..8}; do
          sudo rm /etc/netplan/pdtun$i.yaml 2>/dev/null
          sudo rm /etc/systemd/network/tun$i.network 2>/dev/null
          sudo rm /etc/netplan/pdtun.yaml 2>/dev/null
