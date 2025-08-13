@@ -161,7 +161,14 @@ execute_option() {
       done
       sudo rm /etc/hysteria/server-config.yaml 2>/dev/null
       sudo rm /etc/hysteria/iran-config*.yaml 2>/dev/null
-      rm /etc/hysteria/hysteria-mapping.txt
+      sudo rm /etc/hysteria/port_mapping.txt 2>/dev/null
+      
+      # Check if mapping data persists and warn user
+      if [ -f /etc/hysteria/port_mapping.txt ]; then
+        echo -e "${YELLOW}⚠️  Warning: Mapping data still exists at /etc/hysteria/port_mapping.txt${RESET}"
+        echo -e "${YELLOW}This may cause the monitor to continue acting on deleted tunnels.${RESET}"
+      fi
+      
       echo -e "${GREEN}Hysteria tunnel successfully deleted.${RESET}"
       read -p "Do you want to reboot now? [y/N]: " REBOOT_CHOICE
       if [[ "$REBOOT_CHOICE" =~ ^[Yy]$ ]]; then
