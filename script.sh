@@ -12,6 +12,80 @@ draw_green_line() {
   echo -e "${GREEN}+--------------------------------------------------------+${RESET}"
 }
 
+# Function to check if a port is in use
+check_port_availability() {
+  local port="$1"
+  if command -v netstat >/dev/null 2>&1; then
+    if netstat -tuln | grep -q ":${port} "; then
+      echo -e "${RED}⚠️  Warning: Port ${port} appears to be in use!${RESET}"
+      echo -e "${YELLOW}Please choose a different port or stop the service using this port.${RESET}"
+      return 1
+    fi
+  elif command -v ss >/dev/null 2>&1; then
+    if ss -tuln | grep -q ":${port} "; then
+      echo -e "${RED}⚠️  Warning: Port ${port} appears to be in use!${RESET}"
+      echo -e "${YELLOW}Please choose a different port or stop the service using this port.${RESET}"
+      return 1
+    fi
+  else
+    echo -e "${YELLOW}⚠️  Warning: Cannot check port availability (netstat/ss not found)${RESET}"
+    echo -e "${YELLOW}Please manually verify that port ${port} is not in use.${RESET}"
+  fi
+  return 0
+}
+
+# Function to check system resources and warn if below recommended thresholds
+check_system_resources() {
+  echo -e "${CYAN}Checking system resources...${RESET}"
+  
+  # Check available memory (in MB)
+  if command -v free >/dev/null 2>&1; then
+    local free_mem_mb=$(free -m | awk 'NR==2{printf "%.0f", $7}')
+    local recommended_mem=512
+    
+    if [ "$free_mem_mb" -lt "$recommended_mem" ]; then
+      echo -e "${RED}⚠️  Warning: Low available memory detected!${RESET}"
+      echo -e "${YELLOW}Available: ${free_mem_mb}MB | Recommended: ${recommended_mem}MB+${RESET}"
+      echo -e "${YELLOW}This may affect tunnel performance. Consider upgrading your server.${RESET}"
+    else
+      echo -e "${GREEN}✅ Memory check passed: ${free_mem_mb}MB available${RESET}"
+    fi
+  fi
+  
+  # Check CPU cores
+  if command -v nproc >/dev/null 2>&1; then
+    local cpu_cores=$(nproc)
+    local recommended_cores=1
+    
+    if [ "$cpu_cores" -lt "$recommended_cores" ]; then
+      echo -e "${RED}⚠️  Warning: Insufficient CPU cores detected!${RESET}"
+      echo -e "${YELLOW}Available: ${cpu_cores} cores | Recommended: ${recommended_cores}+ cores${RESET}"
+      echo -e "${YELLOW}This may affect tunnel performance under load.${RESET}"
+    else
+      echo -e "${GREEN}✅ CPU check passed: ${cpu_cores} cores available${RESET}"
+    fi
+  fi
+  
+  # Check system load if uptime is available
+  if command -v uptime >/dev/null 2>&1; then
+    local load_avg=$(uptime | awk -F'load average:' '{print $2}' | awk '{print $1}' | sed 's/,//')
+    local cpu_cores=${cpu_cores:-1}
+    
+    # Compare 1-minute load average to number of CPU cores
+    if command -v bc >/dev/null 2>&1; then
+      local load_ratio=$(echo "scale=2; $load_avg / $cpu_cores" | bc)
+      local high_load=$(echo "$load_ratio > 1.5" | bc)
+      
+      if [ "$high_load" -eq 1 ]; then
+        echo -e "${YELLOW}⚠️  Notice: High system load detected (${load_avg})${RESET}"
+        echo -e "${YELLOW}Consider reducing server load before running intensive operations.${RESET}"
+      fi
+    fi
+  fi
+  
+  echo ""
+}
+
 print_art() {
   echo -e "\033[1;32m                                                           "
   echo -e "@@@@@@@   @@@@@@    @@@@@@                                 "
@@ -59,6 +133,12 @@ print_menu() {
 
 execute_option() {
   local choice="$1"
+  
+  # Check system resources before executing resource-intensive operations
+  if [[ "$choice" =~ ^[123]$ ]]; then
+    check_system_resources
+  fi
+  
   case "$choice" in
     1)
       echo -e "${CYAN}Executing: Create best and safest tunnel...${RESET}"
