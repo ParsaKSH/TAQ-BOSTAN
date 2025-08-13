@@ -23,6 +23,16 @@
 
 Script execution command:
 
+**⚠️ Recommended safe installation (inspect before running):**
+```bash
+curl -Ls https://raw.githubusercontent.com/ParsaKSH/TAQ-BOSTAN/main/script.sh -o taq-bostan-script.sh
+# Inspect the script content before running:
+cat taq-bostan-script.sh
+# If satisfied with the script content, run it:
+bash taq-bostan-script.sh
+```
+
+**Quick installation (direct execution):**
 ```bash
 bash <(curl -Ls https://raw.githubusercontent.com/ParsaKSH/TAQ-BOSTAN/main/script.sh)
 ```

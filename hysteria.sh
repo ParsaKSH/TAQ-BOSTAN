@@ -16,6 +16,85 @@ colorEcho() {
     *)       echo "$text" ;;
   esac
 }
+
+# ------------------ TLS Enforcement Check Function ------------------
+check_tls_configuration() {
+  local config_file="$1"
+  local config_type="$2"  # "server" or "client"
+  
+  if [ ! -f "$config_file" ]; then
+    return 0
+  fi
+  
+  colorEcho "Checking TLS configuration..." cyan
+  
+  if [ "$config_type" = "server" ]; then
+    # Check if server has proper TLS certificate and key
+    if ! grep -q "cert:" "$config_file" || ! grep -q "key:" "$config_file"; then
+      colorEcho "⚠️  TLS Warning: Server configuration may be missing TLS certificate or key!" yellow
+      colorEcho "For better security, ensure TLS is properly configured." yellow
+      return 1
+    fi
+    
+    # Check if cert and key files exist
+    local cert_file=$(grep "cert:" "$config_file" | awk '{print $2}' | tr -d '"')
+    local key_file=$(grep "key:" "$config_file" | awk '{print $2}' | tr -d '"')
+    
+    if [ -n "$cert_file" ] && [ ! -f "$cert_file" ]; then
+      colorEcho "⚠️  TLS Warning: Certificate file not found: $cert_file" yellow
+    fi
+    
+    if [ -n "$key_file" ] && [ ! -f "$key_file" ]; then
+      colorEcho "⚠️  TLS Warning: Key file not found: $key_file" yellow
+    fi
+    
+  elif [ "$config_type" = "client" ]; then
+    # Check if client has TLS configuration
+    if ! grep -q "tls:" "$config_file"; then
+      colorEcho "⚠️  TLS Warning: Client configuration missing TLS section!" red
+      colorEcho "This is CRITICAL for security and censorship resistance!" red
+      colorEcho "Your tunnel may be detected and blocked without proper TLS!" red
+      return 1
+    fi
+    
+    # Check for insecure TLS settings
+    if grep -q "insecure: true" "$config_file"; then
+      colorEcho "⚠️  TLS Notice: Using insecure TLS mode (self-signed certificates)" yellow
+      colorEcho "This is acceptable for self-signed certificates but reduces security." yellow
+    fi
+    
+    # Check if SNI is configured
+    if ! grep -q "sni:" "$config_file"; then
+      colorEcho "⚠️  TLS Warning: SNI (Server Name Indication) not configured!" yellow
+      colorEcho "Consider adding SNI for better traffic obfuscation (e.g., google.com)" yellow
+    fi
+  fi
+  
+  colorEcho "✅ TLS configuration check completed." green
+  return 0
+}
+
+# ------------------ Port Availability Check Function ------------------
+check_port_availability() {
+  local port="$1"
+  if command -v netstat >/dev/null 2>&1; then
+    if netstat -tuln | grep -q ":${port} "; then
+      colorEcho "⚠️  Warning: Port ${port} appears to be in use!" red
+      colorEcho "Please choose a different port or stop the service using this port." yellow
+      return 1
+    fi
+  elif command -v ss >/dev/null 2>&1; then
+    if ss -tuln | grep -q ":${port} "; then
+      colorEcho "⚠️  Warning: Port ${port} appears to be in use!" red
+      colorEcho "Please choose a different port or stop the service using this port." yellow
+      return 1
+    fi
+  else
+    colorEcho "⚠️  Warning: Cannot check port availability (netstat/ss not found)" yellow
+    colorEcho "Please manually verify that port ${port} is not in use." yellow
+  fi
+  return 0
+}
 # ------------------ draw_menu ------------------
 draw_menu() {
   local title="$1"
@@ -432,7 +511,13 @@ if [ "$SERVER_TYPE" == "foreign" ]; then
   while true; do
     read -p "Enter Hysteria port ex.(443) or (1-65535): " H_PORT
     if [[ "$H_PORT" =~ ^[0-9]+$ ]] && (( H_PORT > 0 && H_PORT < 65536 )); then
-      break
+      # Check if the port is available
+      if check_port_availability "$H_PORT"; then
+        break
+      else
+        colorEcho "Port $H_PORT is in use. Please choose a different port." yellow
+        continue
+      fi
     else
       colorEcho "Invalid port. Try again." red
     fi
@@ -482,6 +567,10 @@ EOF
   sudo systemctl enable hysteria
   sudo systemctl start hysteria
   sudo systemctl reload-or-restart hysteria
+  
+  # Check TLS configuration
+  check_tls_configuration "/etc/hysteria/server-config.yaml" "server"
+  
   CRON_CMD='0 4 * * * /usr/bin/systemctl restart hysteria'
   TMP_FILE=$(mktemp)
 
@@ -534,7 +623,20 @@ elif [ "$SERVER_TYPE" == "iran" ]; then
 
     for (( p=1; p<=$PORT_FORWARD_COUNT; p++ ))
     do
-      read -p "Enter port number #$p you want to tunnel: " TUNNEL_PORT
+      while true; do
+        read -p "Enter port number #$p you want to tunnel: " TUNNEL_PORT
+        if [[ "$TUNNEL_PORT" =~ ^[0-9]+$ ]] && (( TUNNEL_PORT > 0 && TUNNEL_PORT < 65536 )); then
+          # Check if the port is available
+          if check_port_availability "$TUNNEL_PORT"; then
+            break
+          else
+            colorEcho "Port $TUNNEL_PORT is in use. Please choose a different port." yellow
+            continue
+          fi
+        else
+          colorEcho "Invalid port number. Please enter a valid port (1-65535)." red
+        fi
+      done
 
       TCP_FORWARD+="  - listen: 0.0.0.0:$TUNNEL_PORT
     remote: '$REMOTE_IP:$TUNNEL_PORT'
@@ -590,6 +692,8 @@ EOF
     sudo systemctl start hysteria${i}
     sudo systemctl reload-or-restart hysteria${i}
 
+    # Check TLS configuration for client
+    check_tls_configuration "$CONFIG_FILE" "client"
     
     # Add cron job for each tunnel
 
