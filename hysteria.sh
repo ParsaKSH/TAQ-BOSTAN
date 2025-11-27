@@ -603,6 +603,7 @@ while IFS='|' read -r cfg service ports; do
   idx="${idx%%.*}"           # => "1"
   chain="HYST${idx}"         # => "HYST1"
   sudo iptables -t mangle -N "$chain" 2>/dev/null || sudo iptables -t mangle -F "$chain"
+  sudo iptables -t mangle -A "$chain" -j RETURN
   IFS=',' read -ra PARR <<< "$ports"
   for p in "${PARR[@]}"; do
     sudo iptables -t mangle -A OUTPUT -p tcp --dport "$p" -j "$chain"
