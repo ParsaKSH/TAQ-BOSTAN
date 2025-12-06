@@ -77,8 +77,8 @@ execute_option() {
       sudo systemctl daemon-reload 2>/dev/null
       for i in {1..9}; do
         sudo systemctl disable hysteria$i 2>/dev/null
-        sudo systemctl disable hysteria 2>/dev/null
       done
+      sudo systemctl disable hysteria 2>/dev/null
       sudo rm /etc/hysteria/server-config.yaml 2>/dev/null
       sudo rm /etc/hysteria/iran-config*.yaml 2>/dev/null
       rm /etc/hysteria/hysteria-mapping.txt

@@ -86,10 +86,8 @@ if [ -f "/usr/local/bin/hysteria" ]; then
  fi
 sudo mkdir -p /etc/hysteria/
 MAPPING_FILE="/etc/hysteria/port_mapping.txt"
-sudo mkdir -p /etc/hysteria
 if [ ! -f "$MAPPING_FILE" ]; then
   sudo touch "$MAPPING_FILE"
-  MAPPING_FILE="/etc/hysteria/port_mapping.txt"
 fi
 sudo mkdir -p /var/log/hysteria/
 
@@ -105,13 +103,16 @@ manage_tunnels() {
   set +o pipefail
   colorEcho "Managing existing tunnels..." cyan
   echo "Existing tunnels:"
-  for i in {1..9}; do
-    if [ -f "/etc/hysteria/iran-config${i}.yaml" ]; then
-      echo -e "\n=== Tunnel #${i} ==="
-      grep "server:" "/etc/hysteria/iran-config${i}.yaml" | cut -d'"' -f2
-      grep "auth:"   "/etc/hysteria/iran-config${i}.yaml" | cut -d'"' -f2
-      echo "Status: $(systemctl is-active hysteria${i})"
-    fi
+  shopt -s nullglob
+  local config_files=(/etc/hysteria/iran-config*.yaml)
+  shopt -u nullglob
+  for cfg in "${config_files[@]}"; do
+    local i="${cfg##*iran-config}"
+    i="${i%.yaml}"
+    echo -e "\n=== Tunnel #${i} ==="
+    grep "server:" "$cfg" | cut -d'"' -f2
+    grep "auth:"   "$cfg" | cut -d'"' -f2
+    echo "Status: $(systemctl is-active hysteria${i})"
   done
 
   echo -e "\nWhat would you like to do?"
@@ -181,9 +182,20 @@ monitor_ports() {
   fi
 
   local found=0
-  for i in {1..9}; do
-    local cfg="/etc/hysteria/iran-config${i}.yaml"
-    [ -f "$cfg" ] || continue
+  # Cache netstat output once for all port checks
+  local tcp_ports
+  local udp_ports
+  tcp_ports=$(netstat -tln 2>/dev/null)
+  udp_ports=$(netstat -uln 2>/dev/null)
+  
+  # Use glob-based discovery instead of iterating 1..9
+  shopt -s nullglob
+  local config_files=(/etc/hysteria/iran-config*.yaml)
+  shopt -u nullglob
+  
+  for cfg in "${config_files[@]}"; do
+    local i="${cfg##*iran-config}"
+    i="${i%.yaml}"
     ((found++))
 
     echo "🔵 Tunnel #${i}"
@@ -203,7 +215,7 @@ monitor_ports() {
     echo "TCP Ports:"
     while read -r line; do
       port=$(echo "$line" | grep -o '[0-9]\+')
-      if netstat -tln | grep -q ":$port "; then
+      if echo "$tcp_ports" | grep -q ":$port "; then
         echo "   ✅ $port (Active)"
       else
         echo "   ❌ $port (Inactive)"
@@ -216,7 +228,7 @@ monitor_ports() {
     echo -e "\nUDP Ports:"
     while read -r line; do
       port=$(echo "$line" | grep -o '[0-9]\+')
-      if netstat -uln | grep -q ":$port "; then
+      if echo "$udp_ports" | grep -q ":$port "; then
         echo "   ✅ $port (Active)"
       else
         echo "   ❌ $port (Inactive)"
@@ -293,13 +305,17 @@ done
 # ------------------ IP Version Menu (Only for Iran) ------------------
 if [ "$SERVER_TYPE" == "iran" ]; then
   while true; do
-    # Scan for existing tunnels and find the next available number
+    # Scan for existing tunnels and find the next available number using glob
     NEXT_TUNNEL=1
-    for i in {1..9}; do
-      if [ -f "/etc/hysteria/iran-config${i}.yaml" ]; then
-        NEXT_TUNNEL=$((i + 1))
+    shopt -s nullglob
+    for cfg in /etc/hysteria/iran-config*.yaml; do
+      local num="${cfg##*iran-config}"
+      num="${num%.yaml}"
+      if (( num >= NEXT_TUNNEL )); then
+        NEXT_TUNNEL=$((num + 1))
       fi
     done
+    shopt -u nullglob
     
     colorEcho "Next available tunnel number: $NEXT_TUNNEL" cyan
     
@@ -479,8 +495,7 @@ WantedBy=multi-user.target
 EOF
 
   sudo systemctl daemon-reload
-  sudo systemctl enable hysteria
-  sudo systemctl start hysteria
+  sudo systemctl enable --now hysteria
   sudo systemctl reload-or-restart hysteria
   CRON_CMD='0 4 * * * /usr/bin/systemctl restart hysteria'
   TMP_FILE=$(mktemp)
@@ -586,8 +601,7 @@ WantedBy=multi-user.target
 EOF
 
     sudo systemctl daemon-reload
-    sudo systemctl enable hysteria${i}
-    sudo systemctl start hysteria${i}
+    sudo systemctl enable --now hysteria${i}
     sudo systemctl reload-or-restart hysteria${i}
 
     
