@@ -59,6 +59,7 @@ def get_all_chain_bytes(chains: list) -> dict:
                         results[current_chain] = int(parts[1])
                         rule_line_seen.add(current_chain)
                     except ValueError:
+                        # Ignore lines with non-integer byte counts (malformed or unexpected output)
                         pass
     except subprocess.CalledProcessError:
         pass
