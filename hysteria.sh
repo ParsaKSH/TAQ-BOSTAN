@@ -309,7 +309,7 @@ if [ "$SERVER_TYPE" == "iran" ]; then
     NEXT_TUNNEL=1
     shopt -s nullglob
     for cfg in /etc/hysteria/iran-config*.yaml; do
-      local num="${cfg##*iran-config}"
+      num="${cfg##*iran-config}"
       num="${num%.yaml}"
       if (( num >= NEXT_TUNNEL )); then
         NEXT_TUNNEL=$((num + 1))
