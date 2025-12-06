@@ -85,6 +85,7 @@ def load_mappings() -> dict:
                 idx = cfg.split("config")[-1].split(".")[0]
                 mappings[idx] = (service, ports)
     except FileNotFoundError:
+        # If the mapping file does not exist, return an empty mapping (expected behavior)
         pass
     return mappings
 
