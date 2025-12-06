@@ -62,6 +62,7 @@ def get_all_chain_bytes(chains: list) -> dict:
                         # Ignore lines with non-integer byte counts (malformed or unexpected output)
                         pass
     except subprocess.CalledProcessError:
+        # If iptables call fails, return zero counts for all chains.
         pass
     
     return results
