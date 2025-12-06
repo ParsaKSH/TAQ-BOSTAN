@@ -47,14 +47,17 @@ def get_all_chain_bytes(chains: list) -> dict:
         ).decode()
         
         current_chain = None
+        rule_line_seen = set()
         for line in out.splitlines():
             if line.startswith("Chain "):
                 current_chain = line.split()[1]
-            elif current_chain in results and line.strip():
+                rule_line_seen.discard(current_chain)
+            elif current_chain in results and line.strip() and current_chain not in rule_line_seen:
                 parts = line.split()
                 if len(parts) > 1:
                     try:
-                        results[current_chain] += int(parts[1])
+                        results[current_chain] = int(parts[1])
+                        rule_line_seen.add(current_chain)
                     except ValueError:
                         pass
     except subprocess.CalledProcessError:
