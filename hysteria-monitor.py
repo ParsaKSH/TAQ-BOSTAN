@@ -65,7 +65,6 @@ def get_all_chain_bytes(chains: list) -> dict:
 def load_mappings() -> dict:
     """
     Load and parse mapping file, return dict of idx -> (service, ports).
-    Caches the result until file mtime changes.
     """
     mappings = {}
     try:
