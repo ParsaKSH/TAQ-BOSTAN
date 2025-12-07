@@ -56,10 +56,6 @@ network:
         - to: 2619:db8:85a3:1b2e::$y/128
           scope: link
 EOF"
-        sudo netplan apply
-        sudo systemctl unmask systemd-networkd.service
-        sudo systemctl start systemd-networkd
-        sudo netplan apply
         network_file="/etc/systemd/network/tun${i}.network"
         sudo bash -c "cat > $network_file <<EOF
 [Network]
@@ -69,6 +65,10 @@ EOF"
         echo -e "\033[1;37mThis is your Private-IPv6 for IRAN server #$i: 2619:db8:85a3:1b2e::$((2*i))\033[0m"
     done
 
+    # Apply all network changes once after creating all configs
+    sudo systemctl unmask systemd-networkd.service
+    sudo systemctl start systemd-networkd
+    sudo netplan apply
     sudo systemctl restart systemd-networkd
     reboot_choice=$(ask_yes_no "Operation completed successfully. Please reboot the system")
     if [ "$reboot_choice" == "yes" ]; then
